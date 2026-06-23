@@ -1,5 +1,5 @@
-// Lightweight client auth for the bonus Admin-login feature.
-// Only logged-in users may EDIT tickets; anyone may CREATE/VIEW.
+// Lightweight client auth for the Admin-login POC.
+// Only logged-in admins may respond to / edit tickets; anyone may create/view.
 // Replace the fake login with a real /api/auth/login + JWT call later.
 import { createContext, useContext, useState, type ReactNode } from 'react'
 
@@ -44,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within an AuthProvider')

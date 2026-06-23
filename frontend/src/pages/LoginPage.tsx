@@ -1,9 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MarkGithubIcon } from '../components/icons'
-import { useAuth } from '../auth'
+import { LifeBuoy } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useAuth } from '@/context/AuthContext'
 
-export default function LoginPage() {
+export function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
@@ -26,27 +30,40 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login-wrap">
-      <div className="logo"><MarkGithubIcon size={40} color="#1f2328" /></div>
-      <h1 style={{ fontWeight: 300, fontSize: 24 }}>Sign in to SupportHub</h1>
-      <form className="login-card" onSubmit={submit}>
-        <div className="field">
-          <label htmlFor="lg-email">Email address</label>
-          <input id="lg-email" className="input" value={email}
-            onChange={(e) => setEmail(e.target.value)} autoComplete="username" />
-        </div>
-        <div className="field">
-          <label htmlFor="lg-pass">Password</label>
-          <input id="lg-pass" type="password" className="input" value={password}
-            onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
-        </div>
-        {error && <div className="error" style={{ marginBottom: 12 }}>{error}</div>}
-        <button className="btn btn-primary" style={{ width: '100%' }} disabled={busy}>
-          {busy ? 'Signing in…' : 'Sign in'}
-        </button>
-      </form>
-      <p style={{ color: 'var(--fg-muted)', fontSize: 13, marginTop: 16 }}>
-        Admin only. Any email + password works in this demo.
+    <div className="mx-auto max-w-sm px-4 py-12 text-center">
+      <LifeBuoy className="mx-auto mb-4 size-10" />
+      <h1 className="mb-6 text-2xl font-light">Sign in to SupportHub</h1>
+      <Card>
+        <CardContent className="pt-6">
+          <form onSubmit={submit} className="space-y-4 text-left">
+            <div className="grid gap-2">
+              <Label htmlFor="lg-email">Email address</Label>
+              <Input
+                id="lg-email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="username"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="lg-pass">Password</Label>
+              <Input
+                id="lg-pass"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+            </div>
+            {error && <p className="text-destructive text-sm">{error}</p>}
+            <Button type="submit" className="w-full" disabled={busy}>
+              {busy ? 'Signing in…' : 'Sign in'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+      <p className="text-muted-foreground mt-4 text-sm">
+        Admin login POC — any email + password works in this demo.
       </p>
     </div>
   )

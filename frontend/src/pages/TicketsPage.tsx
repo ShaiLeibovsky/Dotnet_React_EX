@@ -1,31 +1,35 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { listTickets, isUsingFallback } from '../api/ticketsApi'
-import { STATUSES, type Ticket } from '../types'
-import StatusBadge from '../components/StatusBadge'
-import NewTicketModal from '../components/NewTicketModal'
-import { IssueOpenIcon } from '../components/icons'
-
-function shortId(id: string): string {
-  return '#' + id.slice(0, 7)
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-}
+import { CircleDot, MessageSquare } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { StatusBadge } from '@/components/tickets/StatusBadge'
+import { NewTicketDialog } from '@/components/tickets/NewTicketDialog'
+import { listTickets, isUsingFallback } from '@/api/ticketsApi'
+import { shortId, formatDate } from '@/lib/format'
+import { STATUSES, type Ticket } from '@/types/ticket'
 
 type StatusFilter = 'All' | Ticket['status']
 
-export default function TicketsPage() {
+export function TicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('All')
   const [query, setQuery] = useState('')
-  const [showModal, setShowModal] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -35,7 +39,9 @@ export default function TicketsPage() {
       setTickets(data)
       setLoading(false)
     })
-    return () => { alive = false }
+    return () => {
+      alive = false
+    }
   }, [])
 
   const filtered = useMemo(() => {
@@ -44,8 +50,7 @@ export default function TicketsPage() {
       if (statusFilter !== 'All' && t.status !== statusFilter) return false
       if (!q) return true
       return (
-        t.name.toLowerCase().includes(q) ||
-        t.description.toLowerCase().includes(q)
+        t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)
       )
     })
   }, [tickets, statusFilter, query])
@@ -55,71 +60,110 @@ export default function TicketsPage() {
   ).length
 
   return (
-    <div className="container">
-      <div className="page-head">
-        <h1>Support Tickets</h1>
-        <span className="spacer" />
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-          New ticket
-        </button>
-      </div>
-
-      {isUsingFallback() && (
-        <div className="notice">
-          Backend not reachable — showing in-memory demo data. Changes won’t persist.
-        </div>
-      )}
-
-      <div className="toolbar">
-        <select className="filter" value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}>
-          <option value="All">All statuses</option>
-          {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-        </select>
-        <input className="search" placeholder="Search by name or description…"
-          value={query} onChange={(e) => setQuery(e.target.value)} />
-      </div>
-
-      <div className="list">
-        <div className="list-head">
-          <span className="open">
-            <IssueOpenIcon size={16} /> {openCount} Open
-          </span>
-          <span className="count">{filtered.length} total</span>
-        </div>
-
-        {loading ? (
-          <div className="empty">Loading tickets…</div>
-        ) : filtered.length === 0 ? (
-          <div className="empty">No tickets match your filters.</div>
-        ) : (
-          filtered.map((t) => (
-            <div key={t.id} className="row" onClick={() => navigate(`/tickets/${t.id}`)}>
-              <div className="main">
-                <div className="title">{t.description}</div>
-                <div className="meta">
-                  <span className="mono">{shortId(t.id)}</span> opened {formatDate(t.createdAt)} by {t.name}
-                </div>
-                {t.summary && <div className="summary">🤖 {t.summary}</div>}
-              </div>
-              <div className="right">
-                <StatusBadge status={t.status} />
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-
-      {showModal && (
-        <NewTicketModal
-          onClose={() => setShowModal(false)}
+    <div className="mx-auto max-w-5xl px-4 py-8">
+      <div className="mb-4 flex items-center gap-3">
+        <h1 className="text-xl font-semibold">Support Tickets</h1>
+        <div className="flex-1" />
+        <NewTicketDialog
           onCreated={(ticket) => {
-            setShowModal(false)
             setTickets((prev) => [ticket, ...prev])
             navigate(`/tickets/${ticket.id}`)
           }}
         />
+      </div>
+
+      {isUsingFallback() && (
+        <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          Backend not reachable — showing in-memory demo data. Changes won’t persist.
+        </div>
       )}
+
+      <div className="mb-4 flex gap-2">
+        <Select
+          value={statusFilter}
+          onValueChange={(v) => setStatusFilter(v as StatusFilter)}
+        >
+          <SelectTrigger className="w-44">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All">All statuses</SelectItem>
+            {STATUSES.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Input
+          className="flex-1"
+          placeholder="Search by name or description…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
+
+      <div className="rounded-md border">
+        <div className="bg-muted/50 flex items-center gap-2 border-b px-4 py-2 text-sm font-medium">
+          <CircleDot className="size-4 text-green-600" />
+          <span>{openCount} Open</span>
+          <span className="text-muted-foreground font-normal">· {filtered.length} total</span>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Ticket</TableHead>
+              <TableHead className="w-32 text-center">Replies</TableHead>
+              <TableHead className="w-40 text-right">Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={3} className="text-muted-foreground py-10 text-center">
+                  Loading tickets…
+                </TableCell>
+              </TableRow>
+            ) : filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={3} className="text-muted-foreground py-10 text-center">
+                  No tickets match your filters.
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtered.map((t) => (
+                <TableRow
+                  key={t.id}
+                  className="cursor-pointer"
+                  onClick={() => navigate(`/tickets/${t.id}`)}
+                >
+                  <TableCell>
+                    <div className="font-medium">{t.description}</div>
+                    <div className="text-muted-foreground text-xs">
+                      <span className="font-mono">{shortId(t.id)}</span> opened{' '}
+                      {formatDate(t.createdAt)} by {t.name}
+                    </div>
+                    {t.summary && (
+                      <div className="text-muted-foreground mt-1 truncate text-xs">
+                        🤖 {t.summary}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <span className="text-muted-foreground inline-flex items-center gap-1 text-sm">
+                      <MessageSquare className="size-4" />
+                      {t.responses.length}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <StatusBadge status={t.status} />
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   )
 }

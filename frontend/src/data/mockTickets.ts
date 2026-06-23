@@ -1,8 +1,8 @@
-import type { Ticket } from '../types'
+import type { Ticket } from '@/types/ticket'
 
 // Mock data so the UI is fully viewable before the backend exists.
-// Mirrors the shape of dataset.json. The API layer falls back to this
-// when the backend is unreachable (dev convenience only).
+// Mirrors the shape of dataset.json (+ a responses thread). The API layer
+// falls back to this when the backend is unreachable (dev convenience only).
 export const mockTickets: Ticket[] = [
   {
     id: 'b2a1f7c0-2a93-4d8f-a23e-9b1a24dcf5a1',
@@ -12,6 +12,7 @@ export const mockTickets: Ticket[] = [
     summary: 'Laptop overheating and unexpected shutdown.',
     status: 'New',
     resolution: '',
+    responses: [],
     createdAt: '2025-10-27T14:35:00Z',
     updatedAt: '2025-10-27T14:35:00Z',
   },
@@ -23,6 +24,15 @@ export const mockTickets: Ticket[] = [
     summary: 'Washing machine drainage issue.',
     status: 'In Progress',
     resolution: 'Technician scheduled for tomorrow.',
+    responses: [
+      {
+        id: 'r1',
+        author: 'Support Admin',
+        role: 'admin',
+        body: 'Thanks for reaching out — a technician is scheduled for tomorrow morning.',
+        createdAt: '2025-10-28T09:00:00Z',
+      },
+    ],
     createdAt: '2025-10-25T10:20:00Z',
     updatedAt: '2025-10-28T09:00:00Z',
   },
@@ -34,6 +44,15 @@ export const mockTickets: Ticket[] = [
     summary: 'AC cooling malfunction.',
     status: 'Closed',
     resolution: 'Gas refill completed, tested successfully.',
+    responses: [
+      {
+        id: 'r2',
+        author: 'Support Admin',
+        role: 'admin',
+        body: 'Gas refill completed and the unit tested successfully. Closing the ticket.',
+        createdAt: '2025-10-23T16:00:00Z',
+      },
+    ],
     createdAt: '2025-10-20T08:45:00Z',
     updatedAt: '2025-10-23T16:00:00Z',
   },
@@ -45,6 +64,7 @@ export const mockTickets: Ticket[] = [
     summary: 'Fast battery drain issue on smartphone.',
     status: 'Resolved',
     resolution: 'Battery replaced under warranty.',
+    responses: [],
     createdAt: '2025-10-10T09:15:00Z',
     updatedAt: '2025-10-18T13:40:00Z',
   },
@@ -56,6 +76,7 @@ export const mockTickets: Ticket[] = [
     summary: 'Unstable internet connection issue.',
     status: 'New',
     resolution: '',
+    responses: [],
     createdAt: '2025-10-29T11:00:00Z',
     updatedAt: '2025-10-29T11:00:00Z',
   },

@@ -1,9 +1,10 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
-import App from './App'
-import { AuthProvider } from './auth'
-import './styles.css'
+import App from '@/App'
+import { AuthProvider } from '@/context/AuthContext'
+import { Toaster } from '@/components/ui/sonner'
+import '@/index.css'
 
 const rootEl = document.getElementById('root')
 if (!rootEl) throw new Error('Root element #root not found')
@@ -13,6 +14,7 @@ ReactDOM.createRoot(rootEl).render(
     <BrowserRouter>
       <AuthProvider>
         <App />
+        <Toaster richColors />
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>

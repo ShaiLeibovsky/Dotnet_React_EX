@@ -3,23 +3,20 @@
 //
 // If the backend is not running yet, calls fall back to in-memory mock
 // data so the UI stays usable during frontend development.
-import { mockTickets } from '../data/mockTickets'
-import type { CreateTicketInput, Ticket, UpdateTicketInput } from '../types'
+import { mockTickets } from '@/data/mockTickets'
+import { uuid } from '@/lib/format'
+import type {
+  AddResponseInput,
+  CreateTicketInput,
+  Ticket,
+  UpdateTicketInput,
+} from '@/types/ticket'
 
 const BASE = '/api'
 
 // In-memory fallback store (seeded from mock data).
-let fallback: Ticket[] = mockTickets.map((t) => ({ ...t }))
+let fallback: Ticket[] = mockTickets.map((t) => ({ ...t, responses: [...t.responses] }))
 let useFallback = false
-
-function uuid(): string {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID()
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0
-    const v = c === 'x' ? r : (r & 0x3) | 0x8
-    return v.toString(16)
-  })
-}
 
 async function tryFetch<T>(path: string, options?: RequestInit): Promise<T | null> {
   const res = await fetch(`${BASE}${path}`, {
@@ -72,6 +69,7 @@ export async function createTicket(input: CreateTicketInput): Promise<Ticket> {
     summary: '',
     status: 'New',
     resolution: '',
+    responses: [],
     createdAt: now,
     updatedAt: now,
   }
@@ -94,6 +92,35 @@ export async function updateTicket(id: string, patch: UpdateTicketInput): Promis
   fallback = fallback.map((t) =>
     t.id === id ? { ...t, ...patch, updatedAt: new Date().toISOString() } : t
   )
+  return requireTicket(id)
+}
+
+export async function addResponse(id: string, input: AddResponseInput): Promise<Ticket> {
+  if (!useFallback) {
+    try {
+      const updated = await tryFetch<Ticket>(`/tickets/${id}/responses`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      })
+      if (updated) return updated
+    } catch {
+      useFallback = true
+    }
+  }
+  const now = new Date().toISOString()
+  fallback = fallback.map((t) =>
+    t.id === id
+      ? {
+          ...t,
+          responses: [...t.responses, { id: uuid(), ...input, createdAt: now }],
+          updatedAt: now,
+        }
+      : t
+  )
+  return requireTicket(id)
+}
+
+function requireTicket(id: string): Ticket {
   const found = fallback.find((t) => t.id === id)
   if (!found) throw new Error(`Ticket ${id} not found`)
   return found

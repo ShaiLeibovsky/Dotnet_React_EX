@@ -3,6 +3,16 @@
 export const STATUSES = ['New', 'In Progress', 'Resolved', 'Closed'] as const
 export type TicketStatus = (typeof STATUSES)[number]
 
+export type ResponseRole = 'customer' | 'admin'
+
+export interface TicketResponse {
+  id: string
+  author: string
+  role: ResponseRole
+  body: string
+  createdAt: string
+}
+
 export interface Ticket {
   id: string
   name: string
@@ -11,6 +21,7 @@ export interface Ticket {
   summary: string
   status: TicketStatus
   resolution: string
+  responses: TicketResponse[]
   createdAt: string
   updatedAt: string
 }
@@ -26,4 +37,11 @@ export interface CreateTicketInput {
 export interface UpdateTicketInput {
   status: TicketStatus
   resolution: string
+}
+
+// Payload for POST /api/tickets/{id}/responses
+export interface AddResponseInput {
+  author: string
+  role: ResponseRole
+  body: string
 }
