@@ -25,7 +25,7 @@ import { STATUSES, type Ticket } from '@/types/ticket'
 
 type StatusFilter = 'All' | Ticket['status']
 
-export function TicketsPage() {
+export const TicketsPage = () => {
     const [tickets, setTickets] = useState<Ticket[]>([])
     const [loading, setLoading] = useState(true)
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('All')

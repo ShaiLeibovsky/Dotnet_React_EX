@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/context/AuthContext'
 
-export function LoginPage() {
+export const LoginPage = () => {
     const { login } = useAuth()
     const navigate = useNavigate()
     const [email, setEmail] = useState('')

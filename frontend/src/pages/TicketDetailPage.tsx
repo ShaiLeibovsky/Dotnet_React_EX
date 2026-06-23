@@ -19,7 +19,7 @@ import { formatDateTime } from '@/lib/format'
 import { useAuth } from '@/context/AuthContext'
 import { STATUSES, type Ticket, type TicketStatus } from '@/types/ticket'
 
-export function TicketDetailPage() {
+export const TicketDetailPage = () => {
     const { id = '' } = useParams<{ id: string }>()
     const { user, isAdmin } = useAuth()
     const [ticket, setTicket] = useState<Ticket | null>(null)

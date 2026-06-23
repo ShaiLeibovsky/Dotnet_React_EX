@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/AuthContext'
 
-export function Header() {
+export const Header = () => {
     const { user, logout } = useAuth()
     const navigate = useNavigate()
 

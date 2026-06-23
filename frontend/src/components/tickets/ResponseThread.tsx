@@ -13,7 +13,7 @@ interface Props {
     onRespond: (body: string) => Promise<void>
 }
 
-export function ResponseThread({ responses, canRespond, onRespond }: Props) {
+export const ResponseThread = ({ responses, canRespond, onRespond }: Props) => {
     const [body, setBody] = useState('')
     const [sending, setSending] = useState(false)
 

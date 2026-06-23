@@ -4,7 +4,7 @@ import { TicketsPage } from '@/pages/TicketsPage'
 import { TicketDetailPage } from '@/pages/TicketDetailPage'
 import { LoginPage } from '@/pages/LoginPage'
 
-export default function App() {
+const App = () => {
     return (
         <div className="min-h-screen">
             <Header />
@@ -18,3 +18,5 @@ export default function App() {
         </div>
     )
 }
+
+export default App

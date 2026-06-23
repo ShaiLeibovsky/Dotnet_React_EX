@@ -10,7 +10,7 @@ const STYLES: Record<TicketStatus, { className: string; Icon: typeof CircleDot }
     Closed: { className: 'bg-zinc-500 text-white', Icon: CircleX },
 }
 
-export function StatusBadge({ status }: { status: TicketStatus }) {
+export const StatusBadge = ({ status }: { status: TicketStatus }) => {
     const { className, Icon } = STYLES[status]
     return (
         <Badge className={cn('gap-1 rounded-full border-transparent', className)}>

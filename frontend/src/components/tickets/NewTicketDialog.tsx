@@ -25,7 +25,11 @@ interface Errors {
     description?: string
 }
 
-export function NewTicketDialog({ onCreated }: { onCreated: (ticket: Ticket) => void }) {
+export const NewTicketDialog = ({
+    onCreated,
+}: {
+    onCreated: (ticket: Ticket) => void
+}) => {
     const [open, setOpen] = useState(false)
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')

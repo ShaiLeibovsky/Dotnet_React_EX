@@ -17,7 +17,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<AuthUser | null>(() => {
         const raw = localStorage.getItem('auth_user')
         return raw ? (JSON.parse(raw) as AuthUser) : null
