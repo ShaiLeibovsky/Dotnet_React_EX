@@ -5,16 +5,16 @@ import { TicketDetailPage } from '@/pages/TicketDetailPage'
 import { LoginPage } from '@/pages/LoginPage'
 
 export default function App() {
-  return (
-    <div className="min-h-screen">
-      <Header />
-      <main>
-        <Routes>
-          <Route path="/" element={<TicketsPage />} />
-          <Route path="/tickets/:id" element={<TicketDetailPage />} />
-          <Route path="/login" element={<LoginPage />} />
-        </Routes>
-      </main>
-    </div>
-  )
+    return (
+        <div className="min-h-screen">
+            <Header />
+            <main>
+                <Routes>
+                    <Route path="/" element={<TicketsPage />} />
+                    <Route path="/tickets/:id" element={<TicketDetailPage />} />
+                    <Route path="/login" element={<LoginPage />} />
+                </Routes>
+            </main>
+        </div>
+    )
 }
