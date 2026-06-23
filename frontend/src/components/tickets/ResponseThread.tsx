@@ -43,10 +43,14 @@ export function ResponseThread({ responses, canRespond, onRespond }: Props) {
               <Avatar className="size-8">
                 <AvatarFallback
                   className={cn(
-                    isAdmin ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                    isAdmin ? 'bg-primary text-primary-foreground' : 'bg-muted',
                   )}
                 >
-                  {isAdmin ? <ShieldCheck className="size-4" /> : <User className="size-4" />}
+                  {isAdmin ? (
+                    <ShieldCheck className="size-4" />
+                  ) : (
+                    <User className="size-4" />
+                  )}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 rounded-md border">

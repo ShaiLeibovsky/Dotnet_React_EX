@@ -49,14 +49,12 @@ export function TicketsPage() {
     return tickets.filter((t) => {
       if (statusFilter !== 'All' && t.status !== statusFilter) return false
       if (!q) return true
-      return (
-        t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)
-      )
+      return t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)
     })
   }, [tickets, statusFilter, query])
 
   const openCount = filtered.filter(
-    (t) => t.status === 'New' || t.status === 'In Progress'
+    (t) => t.status === 'New' || t.status === 'In Progress',
   ).length
 
   return (
@@ -107,7 +105,9 @@ export function TicketsPage() {
         <div className="bg-muted/50 flex items-center gap-2 border-b px-4 py-2 text-sm font-medium">
           <CircleDot className="size-4 text-green-600" />
           <span>{openCount} Open</span>
-          <span className="text-muted-foreground font-normal">· {filtered.length} total</span>
+          <span className="text-muted-foreground font-normal">
+            · {filtered.length} total
+          </span>
         </div>
         <Table>
           <TableHeader>
@@ -120,13 +120,19 @@ export function TicketsPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={3} className="text-muted-foreground py-10 text-center">
+                <TableCell
+                  colSpan={3}
+                  className="text-muted-foreground py-10 text-center"
+                >
                   Loading tickets…
                 </TableCell>
               </TableRow>
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={3} className="text-muted-foreground py-10 text-center">
+                <TableCell
+                  colSpan={3}
+                  className="text-muted-foreground py-10 text-center"
+                >
                   No tickets match your filters.
                 </TableCell>
               </TableRow>

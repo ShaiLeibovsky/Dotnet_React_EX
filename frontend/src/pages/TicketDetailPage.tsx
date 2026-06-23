@@ -85,7 +85,10 @@ export function TicketDetailPage() {
   if (!ticket) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-8">
-        Ticket not found. <Link className="underline" to="/">Back to all tickets</Link>
+        Ticket not found.{' '}
+        <Link className="underline" to="/">
+          Back to all tickets
+        </Link>
       </div>
     )
   }
@@ -95,7 +98,9 @@ export function TicketDetailPage() {
       <div className="mb-2">
         <h1 className="text-2xl font-normal">
           {ticket.description}{' '}
-          <span className="text-muted-foreground font-mono">#{ticket.id.slice(0, 7)}</span>
+          <span className="text-muted-foreground font-mono">
+            #{ticket.id.slice(0, 7)}
+          </span>
         </h1>
       </div>
       <div className="text-muted-foreground mb-6 flex flex-wrap items-center gap-2 border-b pb-4 text-sm">
@@ -166,7 +171,9 @@ export function TicketDetailPage() {
           </div>
 
           <div className="border-t pt-4">
-            <h3 className="text-muted-foreground mb-2 text-xs font-semibold">RESOLUTION</h3>
+            <h3 className="text-muted-foreground mb-2 text-xs font-semibold">
+              RESOLUTION
+            </h3>
             {isAdmin ? (
               <Textarea
                 value={resolution}
@@ -188,7 +195,9 @@ export function TicketDetailPage() {
           </div>
 
           <div className="border-t pt-4">
-            <h3 className="text-muted-foreground mb-2 text-xs font-semibold">TICKET ID</h3>
+            <h3 className="text-muted-foreground mb-2 text-xs font-semibold">
+              TICKET ID
+            </h3>
             <p className="font-mono text-xs break-all">{ticket.id}</p>
             <p className="text-muted-foreground mt-2 text-xs">
               Updated {formatDateTime(ticket.updatedAt)}

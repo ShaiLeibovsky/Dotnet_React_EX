@@ -94,21 +94,33 @@ export function NewTicketDialog({ onCreated }: { onCreated: (ticket: Ticket) => 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="nt-name">Full name</Label>
-              <Input id="nt-name" value={name} onChange={(e) => setName(e.target.value)}
-                placeholder="Jane Smith" />
+              <Input
+                id="nt-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Jane Smith"
+              />
               {errors.name && <p className="text-destructive text-sm">{errors.name}</p>}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="nt-email">Email address</Label>
-              <Input id="nt-email" value={email} onChange={(e) => setEmail(e.target.value)}
-                placeholder="jane@example.com" />
+              <Input
+                id="nt-email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="jane@example.com"
+              />
               {errors.email && <p className="text-destructive text-sm">{errors.email}</p>}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="nt-desc">Issue description</Label>
-              <Textarea id="nt-desc" value={description}
+              <Textarea
+                id="nt-desc"
+                value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe what went wrong…" rows={4} />
+                placeholder="Describe what went wrong…"
+                rows={4}
+              />
               {errors.description && (
                 <p className="text-destructive text-sm">{errors.description}</p>
               )}
@@ -117,7 +129,9 @@ export function NewTicketDialog({ onCreated }: { onCreated: (ticket: Ticket) => 
 
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="outline">Cancel</Button>
+              <Button type="button" variant="outline">
+                Cancel
+              </Button>
             </DialogClose>
             <Button type="submit" disabled={saving}>
               {saving ? 'Submitting…' : 'Submit ticket'}

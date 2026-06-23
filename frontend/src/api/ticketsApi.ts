@@ -77,7 +77,10 @@ export async function createTicket(input: CreateTicketInput): Promise<Ticket> {
   return ticket
 }
 
-export async function updateTicket(id: string, patch: UpdateTicketInput): Promise<Ticket> {
+export async function updateTicket(
+  id: string,
+  patch: UpdateTicketInput,
+): Promise<Ticket> {
   if (!useFallback) {
     try {
       const updated = await tryFetch<Ticket>(`/tickets/${id}`, {
@@ -90,7 +93,7 @@ export async function updateTicket(id: string, patch: UpdateTicketInput): Promis
     }
   }
   fallback = fallback.map((t) =>
-    t.id === id ? { ...t, ...patch, updatedAt: new Date().toISOString() } : t
+    t.id === id ? { ...t, ...patch, updatedAt: new Date().toISOString() } : t,
   )
   return requireTicket(id)
 }
@@ -115,7 +118,7 @@ export async function addResponse(id: string, input: AddResponseInput): Promise<
           responses: [...t.responses, { id: uuid(), ...input, createdAt: now }],
           updatedAt: now,
         }
-      : t
+      : t,
   )
   return requireTicket(id)
 }

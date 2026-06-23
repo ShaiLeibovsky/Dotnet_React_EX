@@ -3,10 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import type { TicketStatus } from '@/types/ticket'
 
-const STYLES: Record<
-  TicketStatus,
-  { className: string; Icon: typeof CircleDot }
-> = {
+const STYLES: Record<TicketStatus, { className: string; Icon: typeof CircleDot }> = {
   New: { className: 'bg-green-600 text-white', Icon: CircleDot },
   'In Progress': { className: 'bg-amber-500 text-white', Icon: CircleDashed },
   Resolved: { className: 'bg-violet-600 text-white', Icon: CircleCheck },

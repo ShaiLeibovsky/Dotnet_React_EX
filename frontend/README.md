@@ -44,21 +44,21 @@ src/
 
 ## Screens
 
-| Route | Purpose |
-|-------|---------|
-| `/` | All tickets — table view, status filter, name/description search, **New ticket** dialog |
+| Route          | Purpose                                                                                                                       |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `/`            | All tickets — table view, status filter, name/description search, **New ticket** dialog                                       |
 | `/tickets/:id` | Single ticket by unique ID — customer details, description, AI summary, **response thread**, edit status + resolution (admin) |
-| `/login` | Admin login POC. Signed-in admins can respond/edit; anyone can create/view. |
+| `/login`       | Admin login POC. Signed-in admins can respond/edit; anyone can create/view.                                                   |
 
 ## Expected API (backend contract)
 
-| Method | Path | Body | Returns |
-|--------|------|------|---------|
-| GET | `/api/tickets` | — | `Ticket[]` |
-| GET | `/api/tickets/{id}` | — | `Ticket` |
-| POST | `/api/tickets` | `{ name, email, description }` | created `Ticket` |
-| PUT | `/api/tickets/{id}` | `{ status, resolution }` | updated `Ticket` |
-| POST | `/api/tickets/{id}/responses` | `{ author, role, body }` | updated `Ticket` |
+| Method | Path                          | Body                           | Returns          |
+| ------ | ----------------------------- | ------------------------------ | ---------------- |
+| GET    | `/api/tickets`                | —                              | `Ticket[]`       |
+| GET    | `/api/tickets/{id}`           | —                              | `Ticket`         |
+| POST   | `/api/tickets`                | `{ name, email, description }` | created `Ticket` |
+| PUT    | `/api/tickets/{id}`           | `{ status, resolution }`       | updated `Ticket` |
+| POST   | `/api/tickets/{id}/responses` | `{ author, role, body }`       | updated `Ticket` |
 
 `Ticket`: `{ id, name, email, description, summary, status, resolution, responses, createdAt, updatedAt }`.
 `TicketResponse`: `{ id, author, role: 'customer' | 'admin', body, createdAt }`.

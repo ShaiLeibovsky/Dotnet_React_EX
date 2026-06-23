@@ -17,5 +17,5 @@ ReactDOM.createRoot(rootEl).render(
         <Toaster richColors />
       </AuthProvider>
     </BrowserRouter>
-  </React.StrictMode>
+  </React.StrictMode>,
 )
