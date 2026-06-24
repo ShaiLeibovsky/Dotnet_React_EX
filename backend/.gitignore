@@ -1,0 +1,7 @@
+bin/
+obj/
+*.user
+appsettings.*.local.json
+
+# Runtime data file (seeded from the repo-root dataset.json on first run)
+tickets.json
