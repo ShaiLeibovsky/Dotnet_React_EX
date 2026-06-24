@@ -31,7 +31,7 @@ Endpoints never touch the file or business rules directly.
 ```bash
 cd backend
 dotnet restore
-dotnet run            # http://localhost:5000  (Swagger UI at /swagger in Development)
+dotnet run            # http://localhost:5080  (Swagger UI at /swagger in Development)
 ```
 
 On first run the store seeds from the repo-root `dataset.json` into a local
@@ -39,6 +39,18 @@ On first run the store seeds from the repo-root `dataset.json` into a local
 
 With the backend running, start the frontend (`cd ../frontend && bun run dev`) —
 its "demo data" banner disappears and create/edit/respond persist to disk.
+
+## Troubleshooting
+
+- **`You must install or update .NET to run this application` (needs 8.0.0).**
+  Only a newer runtime (e.g. .NET 10) is installed. The project sets
+  `<RollForward>Major</RollForward>`, so it runs on the newer runtime as-is.
+  For an exact-target run, install the .NET 8 runtime (`brew install dotnet@8`
+  or https://dotnet.microsoft.com/download/dotnet/8.0).
+- **Port already in use / `403` on `http://localhost:5000`.** macOS AirPlay
+  Receiver occupies port 5000, so the dev port is **5080** here. (To free 5000
+  instead: System Settings → General → AirDrop & Handoff → turn off AirPlay
+  Receiver.) The frontend proxy in `frontend/vite.config.ts` targets 5080 to match.
 
 ## API
 

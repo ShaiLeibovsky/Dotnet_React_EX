@@ -5,6 +5,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>TicketApi</RootNamespace>
+    <!-- Run on a newer shared runtime (e.g. .NET 10) when the 8.0 runtime
+         isn't installed. Prefers an exact 8.0 runtime when present. -->
+    <RollForward>Major</RollForward>
   </PropertyGroup>
 
   <ItemGroup>
