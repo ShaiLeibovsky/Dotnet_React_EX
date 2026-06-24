@@ -1,4 +1,7 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.Diagnostics;
+using TicketApi.Endpoints;
+using TicketApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,13 +9,24 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-    options.SerializerOptions.DefaultIgnoreCondition =
-        System.Text.Json.Serialization.JsonIgnoreCondition.Never;
 });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddProblemDetails();
+
+// Options.
+builder.Services.Configure<TicketStoreOptions>(
+    builder.Configuration.GetSection(TicketStoreOptions.SectionName)
+);
+builder.Services.Configure<EmailOptions>(
+    builder.Configuration.GetSection(EmailOptions.SectionName)
+);
+
+// Application services.
+builder.Services.AddSingleton<ITicketStore, JsonTicketStore>();
+builder.Services.AddSingleton<IEmailService, ConsoleEmailService>();
+builder.Services.AddScoped<ITicketService, TicketService>();
 
 // Allow the Vite dev origin so the frontend can call the API directly.
 var allowedOrigins =
@@ -24,7 +38,24 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-app.UseExceptionHandler();
+// Map ValidationException to a 400 ValidationProblem; everything else to 500.
+app.UseExceptionHandler(handler =>
+    handler.Run(async context =>
+    {
+        var error = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+        if (error is ValidationException validation)
+        {
+            await Results
+                .ValidationProblem(validation.Errors)
+                .ExecuteAsync(context);
+            return;
+        }
+
+        await Results
+            .Problem(statusCode: StatusCodes.Status500InternalServerError)
+            .ExecuteAsync(context);
+    })
+);
 
 if (app.Environment.IsDevelopment())
 {
@@ -34,6 +65,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 
-// Ticket endpoints are mapped here (added in a later commit).
+app.MapTicketEndpoints();
 
 app.Run();
