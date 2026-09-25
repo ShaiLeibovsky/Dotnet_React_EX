@@ -95,26 +95,6 @@ public sealed class TicketService : ITicketService
         return updated.ToDto();
     }
 
-    public async Task<TicketDto?> AddResponseAsync(
-        string id,
-        AddResponseRequest request,
-        CancellationToken ct = default
-    )
-    {
-        Validate(request);
-
-        var response = new TicketResponse
-        {
-            Author = request.Author.Trim(),
-            Role = request.Role,
-            Body = request.Body.Trim(),
-            CreatedAt = DateTime.UtcNow,
-        };
-
-        var updated = await _store.UpdateAsync(id, t => t.Responses.Add(response), ct);
-        return updated?.ToDto();
-    }
-
     // --- validation ---
 
     private static void Validate(object request)
@@ -131,18 +111,10 @@ public sealed class TicketService : ITicketService
             throw new ValidationException(errors);
         }
 
-        switch (request)
-        {
-            case UpdateTicketRequest u when !TicketStatuses.IsValid(u.Status):
-                throw ValidationException.Single(
-                    nameof(u.Status),
-                    $"Status must be one of: {string.Join(", ", TicketStatuses.All)}."
-                );
-            case AddResponseRequest a when !ResponseRoles.IsValid(a.Role):
-                throw ValidationException.Single(
-                    nameof(a.Role),
-                    $"Role must be one of: {string.Join(", ", ResponseRoles.All)}."
-                );
-        }
+        if (request is UpdateTicketRequest update && !TicketStatuses.IsValid(update.Status))
+            throw ValidationException.Single(
+                nameof(update.Status),
+                $"Status must be one of: {string.Join(", ", TicketStatuses.All)}."
+            );
     }
 }

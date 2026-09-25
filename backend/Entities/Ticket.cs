@@ -15,7 +15,6 @@ public class Ticket
     public string Status { get; set; } = TicketStatuses.New;
 
     public string Resolution { get; set; } = string.Empty;
-    public List<TicketResponse> Responses { get; set; } = [];
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

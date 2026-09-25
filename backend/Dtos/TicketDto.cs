@@ -11,17 +11,8 @@ public record TicketDto(
     string Summary,
     string Status,
     string Resolution,
-    IReadOnlyList<TicketResponseDto> Responses,
     DateTime CreatedAt,
     DateTime UpdatedAt
-);
-
-public record TicketResponseDto(
-    string Id,
-    string Author,
-    string Role,
-    string Body,
-    DateTime CreatedAt
 );
 
 /// <summary>Entity → DTO mapping (keeps transport shape decoupled from storage).</summary>
@@ -36,11 +27,7 @@ public static class TicketMapping
             t.Summary,
             t.Status,
             t.Resolution,
-            t.Responses.Select(r => r.ToDto()).ToList(),
             t.CreatedAt,
             t.UpdatedAt
         );
-
-    public static TicketResponseDto ToDto(this TicketResponse r) =>
-        new(r.Id, r.Author, r.Role, r.Body, r.CreatedAt);
 }

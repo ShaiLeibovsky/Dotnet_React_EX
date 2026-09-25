@@ -45,18 +45,6 @@ public static class TicketEndpoints
             return updated is null ? NotFound(id) : TypedResults.Ok(updated);
         });
 
-        // BONUS: protect PUT and the responses endpoint with [Authorize] on feature/jwt-auth.
-        group.MapPost("/{id}/responses", async Task<IResult> (
-            string id,
-            AddResponseRequest request,
-            ITicketService service,
-            CancellationToken ct
-        ) =>
-        {
-            var updated = await service.AddResponseAsync(id, request, ct);
-            return updated is null ? NotFound(id) : TypedResults.Ok(updated);
-        });
-
         return app;
     }
 

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CircleDot, MessageSquare } from 'lucide-react'
+import { CircleDot } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import {
     Select,
@@ -19,7 +19,8 @@ import {
 } from '@/components/ui/table'
 import { StatusBadge } from '@/components/tickets/StatusBadge'
 import { NewTicketDialog } from '@/components/tickets/NewTicketDialog'
-import { listTickets, isUsingFallback } from '@/api/ticketsApi'
+import { ErrorRetry } from '@/components/tickets/ErrorRetry'
+import { listTickets } from '@/api/ticketsApi'
 import { shortId, formatDate } from '@/lib/format'
 import { STATUSES, type Ticket } from '@/types/ticket'
 
@@ -28,21 +29,32 @@ type StatusFilter = 'All' | Ticket['status']
 export const TicketsPage = () => {
     const [tickets, setTickets] = useState<Ticket[]>([])
     const [loading, setLoading] = useState(true)
+    const [loadError, setLoadError] = useState<string | null>(null)
+    const [reloadCount, setReloadCount] = useState(0)
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('All')
     const [query, setQuery] = useState('')
     const navigate = useNavigate()
 
     useEffect(() => {
         let alive = true
-        listTickets().then((data) => {
-            if (!alive) return
-            setTickets(data)
-            setLoading(false)
-        })
+        setLoading(true)
+        setLoadError(null)
+        listTickets()
+            .then((data) => {
+                if (!alive) return
+                setTickets(data)
+                setLoading(false)
+            })
+            .catch(() => {
+                if (!alive) return
+                setTickets([])
+                setLoadError('Could not load tickets. The server is unreachable.')
+                setLoading(false)
+            })
         return () => {
             alive = false
         }
-    }, [])
+    }, [reloadCount])
 
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase()
@@ -73,10 +85,12 @@ export const TicketsPage = () => {
                 />
             </div>
 
-            {isUsingFallback() && (
-                <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                    Backend not reachable — showing in-memory demo data. Changes won’t
-                    persist.
+            {loadError && (
+                <div className="mb-4">
+                    <ErrorRetry
+                        message={loadError}
+                        onRetry={() => setReloadCount((count) => count + 1)}
+                    />
                 </div>
             )}
 
@@ -117,7 +131,6 @@ export const TicketsPage = () => {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Ticket</TableHead>
-                            <TableHead className="w-32 text-center">Replies</TableHead>
                             <TableHead className="w-40 text-right">Status</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -125,7 +138,7 @@ export const TicketsPage = () => {
                         {loading ? (
                             <TableRow>
                                 <TableCell
-                                    colSpan={3}
+                                    colSpan={2}
                                     className="text-muted-foreground py-10 text-center"
                                 >
                                     Loading tickets…
@@ -134,7 +147,7 @@ export const TicketsPage = () => {
                         ) : filtered.length === 0 ? (
                             <TableRow>
                                 <TableCell
-                                    colSpan={3}
+                                    colSpan={2}
                                     className="text-muted-foreground py-10 text-center"
                                 >
                                     No tickets match your filters.
@@ -160,12 +173,6 @@ export const TicketsPage = () => {
                                                 🤖 {t.summary}
                                             </div>
                                         )}
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                        <span className="text-muted-foreground inline-flex items-center gap-1 text-sm">
-                                            <MessageSquare className="size-4" />
-                                            {t.responses.length}
-                                        </span>
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <StatusBadge status={t.status} />
