@@ -1,7 +1,9 @@
 import { createBrowserRouter } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { TicketLoadError } from '@/components/tickets/TicketLoadError'
+import { TicketsLoadError } from '@/components/tickets/TicketsLoadError'
 import { ticketLoader } from '@/loaders/ticketLoader'
+import { ticketsLoader } from '@/loaders/ticketsLoader'
 import { TicketsPage } from '@/pages/TicketsPage'
 import { TicketDetailPage } from '@/pages/TicketDetailPage'
 import { LoginPage } from '@/pages/LoginPage'
@@ -10,7 +12,12 @@ export const router = createBrowserRouter([
     {
         element: <AppLayout />,
         children: [
-            { path: '/', element: <TicketsPage /> },
+            {
+                path: '/',
+                element: <TicketsPage />,
+                loader: ticketsLoader,
+                errorElement: <TicketsLoadError />,
+            },
             {
                 path: '/tickets/:id',
                 element: <TicketDetailPage />,

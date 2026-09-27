@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { useLoaderData, useNavigate } from 'react-router-dom'
 import { CircleDot } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import {
@@ -19,57 +19,31 @@ import {
 } from '@/components/ui/table'
 import { StatusBadge } from '@/components/tickets/StatusBadge'
 import { NewTicketDialog } from '@/components/tickets/NewTicketDialog'
-import { ErrorRetry } from '@/components/tickets/ErrorRetry'
-import { listTickets } from '@/api/ticketsApi'
 import { shortId, formatDate } from '@/lib/format'
 import { STATUSES, type Ticket } from '@/types/ticket'
 
 type StatusFilter = 'All' | Ticket['status']
 
 export const TicketsPage = () => {
-    const [tickets, setTickets] = useState<Ticket[]>([])
-    const [loading, setLoading] = useState(true)
-    const [loadError, setLoadError] = useState<string | null>(null)
-    const [reloadCount, setReloadCount] = useState(0)
+    const tickets = useLoaderData() as Ticket[]
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('All')
     const [query, setQuery] = useState('')
     const navigate = useNavigate()
 
-    useEffect(() => {
-        let alive = true
-        setLoading(true)
-        setLoadError(null)
-        listTickets()
-            .then((data) => {
-                if (!alive) return
-                setTickets(data)
-                setLoading(false)
-            })
-            .catch(() => {
-                if (!alive) return
-                setTickets([])
-                setLoadError('Could not load tickets. The server is unreachable.')
-                setLoading(false)
-            })
-        return () => {
-            alive = false
-        }
-    }, [reloadCount])
-
     const filtered = useMemo(() => {
-        const q = query.trim().toLowerCase()
-        return tickets.filter((t) => {
-            if (statusFilter !== 'All' && t.status !== statusFilter) return false
-            if (!q) return true
+        const search = query.trim().toLowerCase()
+        return tickets.filter((ticket) => {
+            if (statusFilter !== 'All' && ticket.status !== statusFilter) return false
+            if (!search) return true
             return (
-                t.name.toLowerCase().includes(q) ||
-                t.description.toLowerCase().includes(q)
+                ticket.name.toLowerCase().includes(search) ||
+                ticket.description.toLowerCase().includes(search)
             )
         })
     }, [tickets, statusFilter, query])
 
     const openCount = filtered.filter(
-        (t) => t.status === 'New' || t.status === 'In Progress',
+        (ticket) => ticket.status === 'New' || ticket.status === 'In Progress',
     ).length
 
     return (
@@ -78,21 +52,9 @@ export const TicketsPage = () => {
                 <h1 className="text-xl font-semibold">Support Tickets</h1>
                 <div className="flex-1" />
                 <NewTicketDialog
-                    onCreated={(ticket) => {
-                        setTickets((prev) => [ticket, ...prev])
-                        navigate(`/tickets/${ticket.id}`)
-                    }}
+                    onCreated={(ticket) => navigate(`/tickets/${ticket.id}`)}
                 />
             </div>
-
-            {loadError && (
-                <div className="mb-4">
-                    <ErrorRetry
-                        message={loadError}
-                        onRetry={() => setReloadCount((count) => count + 1)}
-                    />
-                </div>
-            )}
 
             <div className="mb-4 flex gap-2">
                 <Select
@@ -135,16 +97,7 @@ export const TicketsPage = () => {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {loading ? (
-                            <TableRow>
-                                <TableCell
-                                    colSpan={2}
-                                    className="text-muted-foreground py-10 text-center"
-                                >
-                                    Loading tickets…
-                                </TableCell>
-                            </TableRow>
-                        ) : filtered.length === 0 ? (
+                        {filtered.length === 0 ? (
                             <TableRow>
                                 <TableCell
                                     colSpan={2}
@@ -154,28 +107,31 @@ export const TicketsPage = () => {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filtered.map((t) => (
+                            filtered.map((ticket) => (
                                 <TableRow
-                                    key={t.id}
+                                    key={ticket.id}
                                     className="cursor-pointer"
-                                    onClick={() => navigate(`/tickets/${t.id}`)}
+                                    onClick={() => navigate(`/tickets/${ticket.id}`)}
                                 >
                                     <TableCell>
-                                        <div className="font-medium">{t.description}</div>
+                                        <div className="font-medium">
+                                            {ticket.description}
+                                        </div>
                                         <div className="text-muted-foreground text-xs">
                                             <span className="font-mono">
-                                                {shortId(t.id)}
+                                                {shortId(ticket.id)}
                                             </span>{' '}
-                                            opened {formatDate(t.createdAt)} by {t.name}
+                                            opened {formatDate(ticket.createdAt)} by{' '}
+                                            {ticket.name}
                                         </div>
-                                        {t.summary && (
+                                        {ticket.summary && (
                                             <div className="text-muted-foreground mt-1 truncate text-xs">
-                                                🤖 {t.summary}
+                                                🤖 {ticket.summary}
                                             </div>
                                         )}
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <StatusBadge status={t.status} />
+                                        <StatusBadge status={ticket.status} />
                                     </TableCell>
                                 </TableRow>
                             ))
