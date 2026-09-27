@@ -1,22 +1,30 @@
-import { Routes, Route } from 'react-router-dom'
+import { createBrowserRouter, Outlet } from 'react-router-dom'
 import { Header } from '@/components/layout/Header'
 import { TicketsPage } from '@/pages/TicketsPage'
-import { TicketDetailPage } from '@/pages/TicketDetailPage'
+import { TicketDetailPage, TicketLoadError, ticketLoader } from '@/pages/TicketDetailPage'
 import { LoginPage } from '@/pages/LoginPage'
 
-const App = () => {
-    return (
-        <div className="min-h-screen">
-            <Header />
-            <main>
-                <Routes>
-                    <Route path="/" element={<TicketsPage />} />
-                    <Route path="/tickets/:id" element={<TicketDetailPage />} />
-                    <Route path="/login" element={<LoginPage />} />
-                </Routes>
-            </main>
-        </div>
-    )
-}
+const AppLayout = () => (
+    <div className="min-h-screen">
+        <Header />
+        <main>
+            <Outlet />
+        </main>
+    </div>
+)
 
-export default App
+export const router = createBrowserRouter([
+    {
+        element: <AppLayout />,
+        children: [
+            { path: '/', element: <TicketsPage /> },
+            {
+                path: '/tickets/:id',
+                element: <TicketDetailPage />,
+                loader: ticketLoader,
+                errorElement: <TicketLoadError />,
+            },
+            { path: '/login', element: <LoginPage /> },
+        ],
+    },
+])

@@ -1,5 +1,11 @@
-import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useState } from 'react'
+import {
+    Link,
+    useLoaderData,
+    useRevalidator,
+    useRouteError,
+    type LoaderFunctionArgs,
+} from 'react-router-dom'
 import { toast } from 'sonner'
 import { ArrowLeft, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -19,58 +25,54 @@ import { formatDateTime } from '@/lib/format'
 import { useAuth } from '@/context/AuthContext'
 import { STATUSES, type Ticket, type TicketStatus } from '@/types/ticket'
 
+export const ticketLoader = ({ params }: LoaderFunctionArgs): Promise<Ticket> =>
+    getTicket(params.id ?? '')
+
+export const TicketLoadError = () => {
+    const error = useRouteError()
+    const revalidator = useRevalidator()
+    const message =
+        error instanceof ApiError && error.status === 404
+            ? 'No ticket exists with this id.'
+            : 'Could not load this ticket. The server is unreachable.'
+
+    return (
+        <div className="mx-auto max-w-5xl px-4 py-8">
+            <ErrorRetry message={message} onRetry={() => revalidator.revalidate()} />
+            <Button asChild variant="link" className="mt-4 px-0">
+                <Link to="/">
+                    <ArrowLeft className="size-4" /> All tickets
+                </Link>
+            </Button>
+        </div>
+    )
+}
+
 export const TicketDetailPage = () => {
-    const { id = '' } = useParams<{ id: string }>()
+    const ticket = useLoaderData() as Ticket
     const { isAdmin } = useAuth()
-    const [ticket, setTicket] = useState<Ticket | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [loadError, setLoadError] = useState<string | null>(null)
-    const [reloadCount, setReloadCount] = useState(0)
-    const [status, setStatus] = useState<TicketStatus>('New')
-    const [resolution, setResolution] = useState('')
+    const revalidator = useRevalidator()
+    const [editedTicketId, setEditedTicketId] = useState(ticket.id)
+    const [status, setStatus] = useState<TicketStatus>(ticket.status)
+    const [resolution, setResolution] = useState(ticket.resolution)
     const [saving, setSaving] = useState(false)
 
-    useEffect(() => {
-        let alive = true
-        setLoading(true)
-        setLoadError(null)
-        getTicket(id)
-            .then((loaded) => {
-                if (!alive) return
-                setTicket(loaded)
-                setStatus(loaded.status)
-                setResolution(loaded.resolution || '')
-                setLoading(false)
-            })
-            .catch((error: unknown) => {
-                if (!alive) return
-                setLoadError(
-                    error instanceof ApiError && error.status === 404
-                        ? 'No ticket exists with this id.'
-                        : 'Could not load this ticket. The server is unreachable.',
-                )
-                setLoading(false)
-            })
-        return () => {
-            alive = false
-        }
-    }, [id, reloadCount])
+    if (editedTicketId !== ticket.id) {
+        setEditedTicketId(ticket.id)
+        setStatus(ticket.status)
+        setResolution(ticket.resolution)
+    }
 
-    const dirty =
-        ticket !== null &&
-        (status !== ticket.status || resolution !== (ticket.resolution || ''))
+    const dirty = status !== ticket.status || resolution !== ticket.resolution
 
     async function save() {
-        if (!ticket) return
         setSaving(true)
         try {
-            const prev = ticket
-            const updated = await updateTicket(id, { status, resolution })
-            setTicket(updated)
+            const updated = await updateTicket(ticket.id, { status, resolution })
             const notes: string[] = []
-            if (updated.status !== prev.status) notes.push('status change')
-            if ((updated.resolution || '') !== (prev.resolution || ''))
-                notes.push('resolution update')
+            if (updated.status !== ticket.status) notes.push('status change')
+            if (updated.resolution !== ticket.resolution) notes.push('resolution update')
+            revalidator.revalidate()
             toast.success('Changes saved', {
                 description: `Simulated email sent to customer (${notes.join(' + ') || 'no change'}).`,
             })
@@ -81,25 +83,6 @@ export const TicketDetailPage = () => {
         } finally {
             setSaving(false)
         }
-    }
-
-    if (loading) {
-        return <div className="mx-auto max-w-5xl px-4 py-8">Loading…</div>
-    }
-    if (loadError || !ticket) {
-        return (
-            <div className="mx-auto max-w-5xl px-4 py-8">
-                <ErrorRetry
-                    message={loadError ?? 'Could not load this ticket.'}
-                    onRetry={() => setReloadCount((count) => count + 1)}
-                />
-                <Button asChild variant="link" className="mt-4 px-0">
-                    <Link to="/">
-                        <ArrowLeft className="size-4" /> All tickets
-                    </Link>
-                </Button>
-            </div>
-        )
     }
 
     return (
