@@ -20,10 +20,4 @@ public interface ITicketService
         UpdateTicketRequest request,
         CancellationToken ct = default
     );
-
-    Task<TicketDto?> AddResponseAsync(
-        string id,
-        AddResponseRequest request,
-        CancellationToken ct = default
-    );
 }

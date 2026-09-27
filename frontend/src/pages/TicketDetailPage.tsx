@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useLoaderData, useRevalidator } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ArrowLeft, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -13,84 +13,46 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { StatusBadge } from '@/components/tickets/StatusBadge'
-import { ResponseThread } from '@/components/tickets/ResponseThread'
-import { getTicket, updateTicket, addResponse } from '@/api/ticketsApi'
+import { updateTicket } from '@/api/ticketsApi'
 import { formatDateTime } from '@/lib/format'
 import { useAuth } from '@/context/AuthContext'
 import { STATUSES, type Ticket, type TicketStatus } from '@/types/ticket'
 
 export const TicketDetailPage = () => {
-    const { id = '' } = useParams<{ id: string }>()
-    const { user, isAdmin } = useAuth()
-    const [ticket, setTicket] = useState<Ticket | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [status, setStatus] = useState<TicketStatus>('New')
-    const [resolution, setResolution] = useState('')
+    const ticket = useLoaderData() as Ticket
+    const { isAdmin } = useAuth()
+    const revalidator = useRevalidator()
+    const [editedTicketId, setEditedTicketId] = useState(ticket.id)
+    const [status, setStatus] = useState<TicketStatus>(ticket.status)
+    const [resolution, setResolution] = useState(ticket.resolution)
     const [saving, setSaving] = useState(false)
 
-    useEffect(() => {
-        let alive = true
-        getTicket(id).then((t) => {
-            if (!alive) return
-            setTicket(t)
-            if (t) {
-                setStatus(t.status)
-                setResolution(t.resolution || '')
-            }
-            setLoading(false)
-        })
-        return () => {
-            alive = false
-        }
-    }, [id])
+    if (editedTicketId !== ticket.id) {
+        setEditedTicketId(ticket.id)
+        setStatus(ticket.status)
+        setResolution(ticket.resolution)
+    }
 
-    const dirty =
-        ticket !== null &&
-        (status !== ticket.status || resolution !== (ticket.resolution || ''))
+    const dirty = status !== ticket.status || resolution !== ticket.resolution
 
     async function save() {
-        if (!ticket) return
         setSaving(true)
         try {
-            const prev = ticket
-            const updated = await updateTicket(id, { status, resolution })
-            setTicket(updated)
+            const updated = await updateTicket(ticket.id, { status, resolution })
             const notes: string[] = []
-            if (updated.status !== prev.status) notes.push('status change')
-            if ((updated.resolution || '') !== (prev.resolution || ''))
-                notes.push('resolution update')
+            if (updated.status !== ticket.status) notes.push('status change')
+            if (updated.resolution !== ticket.resolution) notes.push('resolution update')
+            revalidator.revalidate()
             toast.success('Changes saved', {
                 description: `Simulated email sent to customer (${notes.join(' + ') || 'no change'}).`,
+            })
+        } catch {
+            toast.error('Could not save changes', {
+                description: 'The server is unreachable. Try again.',
             })
         } finally {
             setSaving(false)
         }
-    }
-
-    async function respond(body: string) {
-        const updated = await addResponse(id, {
-            author: user?.email ?? 'Support Admin',
-            role: 'admin',
-            body,
-        })
-        setTicket(updated)
-        toast.success('Response posted', {
-            description: 'Simulated email sent to customer.',
-        })
-    }
-
-    if (loading) {
-        return <div className="mx-auto max-w-5xl px-4 py-8">Loading…</div>
-    }
-    if (!ticket) {
-        return (
-            <div className="mx-auto max-w-5xl px-4 py-8">
-                Ticket not found.{' '}
-                <Link className="underline" to="/">
-                    Back to all tickets
-                </Link>
-            </div>
-        )
     }
 
     return (
@@ -135,19 +97,6 @@ export const TicketDetailPage = () => {
                                     {ticket.summary}
                                 </div>
                             )}
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-base">Responses</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <ResponseThread
-                                responses={ticket.responses}
-                                canRespond={isAdmin}
-                                onRespond={respond}
-                            />
                         </CardContent>
                     </Card>
                 </div>
@@ -231,7 +180,7 @@ export const TicketDetailPage = () => {
                             <Link className="underline" to="/login">
                                 Sign in
                             </Link>{' '}
-                            as admin to respond and edit.
+                            as admin to edit.
                         </p>
                     )}
 

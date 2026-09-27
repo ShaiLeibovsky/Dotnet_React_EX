@@ -166,15 +166,6 @@ public sealed class JsonTicketStore : ITicketStore, IDisposable
             Summary = t.Summary,
             Status = t.Status,
             Resolution = t.Resolution,
-            Responses = t.Responses.Select(r => new TicketResponse
-            {
-                Id = r.Id,
-                Author = r.Author,
-                Role = r.Role,
-                Body = r.Body,
-                CreatedAt = r.CreatedAt,
-            })
-                .ToList(),
             CreatedAt = t.CreatedAt,
             UpdatedAt = t.UpdatedAt,
         };

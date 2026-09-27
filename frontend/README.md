@@ -1,9 +1,9 @@
 # Support Tickets — Frontend
 
 GitHub-issues-style UI for the customer-support ticket system. Customers open
-tickets and await admin responses; admins reply, set status, and record a
-resolution. Talks to the ASP.NET Core backend **only via `/api`** endpoints, and
-falls back to in-memory demo data when the backend is not running.
+tickets and await a resolution; admins set status and record the resolution.
+Talks to the ASP.NET Core backend **only via `/api`** endpoints. When the backend
+is unreachable, screens show an error with a retry control.
 
 ## Stack
 
@@ -32,11 +32,10 @@ src/
   api/         ticketsApi.ts        — sole data-access layer (no fetch in components)
   components/
     layout/    Header.tsx
-    tickets/   StatusBadge, NewTicketDialog, ResponseThread
+    tickets/   StatusBadge, NewTicketDialog
     ui/        shadcn/ui primitives (generated)
   context/     AuthContext.tsx      — admin-login POC (useAuth)
-  data/        mockTickets.ts       — in-memory fallback seed
-  lib/         utils.ts (cn), format.ts (shortId/date/uuid)
+  lib/         utils.ts (cn), format.ts (shortId/date)
   pages/       TicketsPage, TicketDetailPage, LoginPage
   types/       ticket.ts            — domain types + API DTOs
   index.css    Tailwind v4 + theme tokens
@@ -47,8 +46,8 @@ src/
 | Route          | Purpose                                                                                                                       |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `/`            | All tickets — table view, status filter, name/description search, **New ticket** dialog                                       |
-| `/tickets/:id` | Single ticket by unique ID — customer details, description, AI summary, **response thread**, edit status + resolution (admin) |
-| `/login`       | Admin login POC. Signed-in admins can respond/edit; anyone can create/view.                                                   |
+| `/tickets/:id` | Single ticket by unique ID — customer details, description, AI summary, edit status + resolution (admin) |
+| `/login`       | Admin login POC. Signed-in admins can edit; anyone can create/view.                                                           |
 
 ## Expected API (backend contract)
 
@@ -58,16 +57,13 @@ src/
 | GET    | `/api/tickets/{id}`           | —                              | `Ticket`         |
 | POST   | `/api/tickets`                | `{ name, email, description }` | created `Ticket` |
 | PUT    | `/api/tickets/{id}`           | `{ status, resolution }`       | updated `Ticket` |
-| POST   | `/api/tickets/{id}/responses` | `{ author, role, body }`       | updated `Ticket` |
 
-`Ticket`: `{ id, name, email, description, summary, status, resolution, responses, createdAt, updatedAt }`.
-`TicketResponse`: `{ id, author, role: 'customer' | 'admin', body, createdAt }`.
+`Ticket`: `{ id, name, email, description, summary, status, resolution, createdAt, updatedAt }`.
 Statuses: `New`, `In Progress`, `Resolved`, `Closed`.
 
 ## Notes
 
 - Email sending + AI summary are backend concerns. The UI shows the summary when
-  present and toasts a "simulated email sent" notice on status/resolution change
-  and on each new response.
+  present and toasts a "simulated email sent" notice on status/resolution change.
 - Auth is a client-side POC (`src/context/AuthContext.tsx`) — swap in a real
   `/api/auth/login` + JWT call when the backend is ready.

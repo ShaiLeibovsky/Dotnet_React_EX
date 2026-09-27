@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { CircleDot, MessageSquare } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { useLoaderData, useNavigate } from 'react-router-dom'
+import { CircleDot } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import {
     Select,
@@ -19,45 +19,31 @@ import {
 } from '@/components/ui/table'
 import { StatusBadge } from '@/components/tickets/StatusBadge'
 import { NewTicketDialog } from '@/components/tickets/NewTicketDialog'
-import { listTickets, isUsingFallback } from '@/api/ticketsApi'
 import { shortId, formatDate } from '@/lib/format'
 import { STATUSES, type Ticket } from '@/types/ticket'
 
 type StatusFilter = 'All' | Ticket['status']
 
 export const TicketsPage = () => {
-    const [tickets, setTickets] = useState<Ticket[]>([])
-    const [loading, setLoading] = useState(true)
+    const tickets = useLoaderData() as Ticket[]
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('All')
     const [query, setQuery] = useState('')
     const navigate = useNavigate()
 
-    useEffect(() => {
-        let alive = true
-        listTickets().then((data) => {
-            if (!alive) return
-            setTickets(data)
-            setLoading(false)
-        })
-        return () => {
-            alive = false
-        }
-    }, [])
-
     const filtered = useMemo(() => {
-        const q = query.trim().toLowerCase()
-        return tickets.filter((t) => {
-            if (statusFilter !== 'All' && t.status !== statusFilter) return false
-            if (!q) return true
+        const search = query.trim().toLowerCase()
+        return tickets.filter((ticket) => {
+            if (statusFilter !== 'All' && ticket.status !== statusFilter) return false
+            if (!search) return true
             return (
-                t.name.toLowerCase().includes(q) ||
-                t.description.toLowerCase().includes(q)
+                ticket.name.toLowerCase().includes(search) ||
+                ticket.description.toLowerCase().includes(search)
             )
         })
     }, [tickets, statusFilter, query])
 
     const openCount = filtered.filter(
-        (t) => t.status === 'New' || t.status === 'In Progress',
+        (ticket) => ticket.status === 'New' || ticket.status === 'In Progress',
     ).length
 
     return (
@@ -66,19 +52,9 @@ export const TicketsPage = () => {
                 <h1 className="text-xl font-semibold">Support Tickets</h1>
                 <div className="flex-1" />
                 <NewTicketDialog
-                    onCreated={(ticket) => {
-                        setTickets((prev) => [ticket, ...prev])
-                        navigate(`/tickets/${ticket.id}`)
-                    }}
+                    onCreated={(ticket) => navigate(`/tickets/${ticket.id}`)}
                 />
             </div>
-
-            {isUsingFallback() && (
-                <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                    Backend not reachable — showing in-memory demo data. Changes won’t
-                    persist.
-                </div>
-            )}
 
             <div className="mb-4 flex gap-2">
                 <Select
@@ -117,58 +93,45 @@ export const TicketsPage = () => {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Ticket</TableHead>
-                            <TableHead className="w-32 text-center">Replies</TableHead>
                             <TableHead className="w-40 text-right">Status</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {loading ? (
+                        {filtered.length === 0 ? (
                             <TableRow>
                                 <TableCell
-                                    colSpan={3}
-                                    className="text-muted-foreground py-10 text-center"
-                                >
-                                    Loading tickets…
-                                </TableCell>
-                            </TableRow>
-                        ) : filtered.length === 0 ? (
-                            <TableRow>
-                                <TableCell
-                                    colSpan={3}
+                                    colSpan={2}
                                     className="text-muted-foreground py-10 text-center"
                                 >
                                     No tickets match your filters.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filtered.map((t) => (
+                            filtered.map((ticket) => (
                                 <TableRow
-                                    key={t.id}
+                                    key={ticket.id}
                                     className="cursor-pointer"
-                                    onClick={() => navigate(`/tickets/${t.id}`)}
+                                    onClick={() => navigate(`/tickets/${ticket.id}`)}
                                 >
                                     <TableCell>
-                                        <div className="font-medium">{t.description}</div>
+                                        <div className="font-medium">
+                                            {ticket.description}
+                                        </div>
                                         <div className="text-muted-foreground text-xs">
                                             <span className="font-mono">
-                                                {shortId(t.id)}
+                                                {shortId(ticket.id)}
                                             </span>{' '}
-                                            opened {formatDate(t.createdAt)} by {t.name}
+                                            opened {formatDate(ticket.createdAt)} by{' '}
+                                            {ticket.name}
                                         </div>
-                                        {t.summary && (
+                                        {ticket.summary && (
                                             <div className="text-muted-foreground mt-1 truncate text-xs">
-                                                🤖 {t.summary}
+                                                🤖 {ticket.summary}
                                             </div>
                                         )}
                                     </TableCell>
-                                    <TableCell className="text-center">
-                                        <span className="text-muted-foreground inline-flex items-center gap-1 text-sm">
-                                            <MessageSquare className="size-4" />
-                                            {t.responses.length}
-                                        </span>
-                                    </TableCell>
                                     <TableCell className="text-right">
-                                        <StatusBadge status={t.status} />
+                                        <StatusBadge status={ticket.status} />
                                     </TableCell>
                                 </TableRow>
                             ))

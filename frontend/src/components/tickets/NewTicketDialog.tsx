@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Plus } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -67,6 +68,10 @@ export const NewTicketDialog = ({
             onCreated(ticket)
             setOpen(false)
             reset()
+        } catch {
+            toast.error('Could not create the ticket', {
+                description: 'The server is unreachable. Try again.',
+            })
         } finally {
             setSaving(false)
         }
