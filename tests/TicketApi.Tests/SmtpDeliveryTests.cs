@@ -83,20 +83,7 @@ public class SmtpDeliveryTests
     [Fact]
     public async Task ASendFailureDoesNotFailTheRequestThatTriggeredIt()
     {
-        var deadPort = ClosedLoopbackPort();
-
-        using var api = new TicketApiFactory
-        {
-            KeepConfiguredEmailService = true,
-            Settings =
-            {
-                ["Email:SmtpHost"] = "127.0.0.1",
-                ["Email:SmtpPort"] = deadPort.ToString(),
-                ["Email:SmtpUser"] = "support@example.com",
-                ["Email:SmtpPassword"] = "app-password",
-                ["Email:SmtpUseSsl"] = "false",
-            },
-        };
+        using var api = SmtpConfiguredApi(ClosedLoopbackPort());
         var client = api.CreateClient();
 
         var response = await client.PostAsJsonAsync(
@@ -112,6 +99,30 @@ public class SmtpDeliveryTests
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
     }
 
+    [Fact]
+    public async Task AnUnusableSenderAddressDoesNotFailTheRequestThatTriggeredIt()
+    {
+        using var smtp = new FakeSmtpServer();
+        var api = SmtpConfiguredApi(smtp);
+        api.ConfigurationOverrides["Email:SmtpFrom"] = "not an address";
+        using (api)
+        {
+            var client = api.CreateClient();
+
+            var response = await client.PostAsJsonAsync(
+                "/api/tickets",
+                new
+                {
+                    name = "Grace Hopper",
+                    email = "grace@example.com",
+                    description = "A moth is lodged in relay seventy.",
+                }
+            );
+
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        }
+    }
+
     private static int ClosedLoopbackPort()
     {
         var listener = new TcpListener(IPAddress.Loopback, port: 0);
@@ -122,16 +133,19 @@ public class SmtpDeliveryTests
     }
 
     private static TicketApiFactory SmtpConfiguredApi(FakeSmtpServer smtp) =>
+        SmtpConfiguredApi(smtp.Port);
+
+    private static TicketApiFactory SmtpConfiguredApi(int smtpPort) =>
         new()
         {
             KeepConfiguredEmailService = true,
-            Settings =
+            ConfigurationOverrides =
             {
                 ["Email:SmtpHost"] = "127.0.0.1",
-                ["Email:SmtpPort"] = smtp.Port.ToString(),
+                ["Email:SmtpPort"] = smtpPort.ToString(),
                 ["Email:SmtpUser"] = "support@example.com",
                 ["Email:SmtpPassword"] = "app-password",
-                ["Email:SmtpUseSsl"] = "false",
+                ["Email:SmtpUseStartTls"] = "false",
             },
         };
 

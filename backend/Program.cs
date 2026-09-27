@@ -67,6 +67,11 @@ var app = builder.Build();
 if (storeIsSqlite)
     await TicketDatabase.MigrateAndSeedAsync(app.Services);
 
+app.Logger.LogInformation(
+    "Customer notifications are delivered by {EmailService}.",
+    app.Services.GetRequiredService<IEmailService>().GetType().Name
+);
+
 // Map ValidationException to a 400 ValidationProblem; everything else to 500.
 app.UseExceptionHandler(handler =>
     handler.Run(async context =>

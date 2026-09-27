@@ -109,9 +109,12 @@ dotnet user-secrets set "Email:SmtpUser" "you@gmail.com"
 dotnet user-secrets set "Email:SmtpPassword" "your-16-char-app-password"
 ```
 
-All three keys must be present; with any of them missing, console logging stays in place.
+All three keys must be present; with any of them missing, console logging stays in place. The
+backend logs which of the two it chose on startup. User-secrets are only read in the
+`Development` environment, which is what `dotnet run` uses; elsewhere supply the same keys as
+environment variables (`Email__SmtpHost`, `Email__SmtpUser`, `Email__SmtpPassword`).
 Optional keys: `Email:SmtpPort` (default `587`), `Email:SmtpFrom` (defaults to `SmtpUser`),
-`Email:SmtpUseSsl` (default `true`), and `Email:TrackingBaseUrl` for the link in the
+`Email:SmtpUseStartTls` (default `true`), and `Email:TrackingBaseUrl` for the link in the
 ticket-created message.
 
 Gmail needs an [app password](https://support.google.com/accounts/answer/185833), not your

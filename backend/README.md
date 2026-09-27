@@ -20,7 +20,8 @@ backend/
     ITicketStore / JsonTicketStore     thread-safe JSON-file persistence
     ITicketStore / SqliteTicketStore   EF Core persistence, selected by configuration
     ITicketService / TicketService     validation + orchestration + mapping
-    IEmailService / ConsoleEmailService notifications (console mock)
+    IEmailService / ConsoleEmailService notifications (console mock, the default)
+    SmtpEmailService                   notifications by email when SMTP is configured
   Data/                 TicketDbContext, migrations, startup migrate + seed
   Endpoints/TicketEndpoints.cs         /api/tickets route group
 ```
@@ -84,10 +85,15 @@ Server sets `id`, timestamps, and defaults (`status=New`, empty summary/resoluti
 `ConsoleEmailService` logs a simulated email on: ticket created, status changed,
 resolution changed — each with a customer tracking link.
 
+`SmtpEmailService` sends the same three by email, and replaces the console mock whenever
+`Email:SmtpHost`, `Email:SmtpUser` and `Email:SmtpPassword` are all configured (user-secrets
+in Development, environment variables elsewhere). The chosen one is logged on startup. A send
+failure is logged and never fails the request that triggered it. See the root README for the
+reviewer-facing setup.
+
 ## Out of scope (future branches)
 
 - `feature/jwt-auth` — admin login + JWT; protect PUT
 - `feature/ai-summary` — AI-generated `summary` on create
-- `feature/email-gmail-smtp` — real email via MailKit + Gmail SMTP
 
-Seams are in place (`IEmailService`, `// BONUS` comments) so each lands without refactoring.
+Seams are in place (`// BONUS` comments) so each lands without refactoring.

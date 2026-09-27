@@ -1,3 +1,5 @@
+using TicketApi.Entities;
+
 namespace TicketApi.Services;
 
 /// <summary>Bound from the "Email" config section.</summary>
@@ -20,7 +22,7 @@ public class EmailOptions
     /// <summary>SMTP password or provider app-password. Supplied through user-secrets.</summary>
     public string? SmtpPassword { get; set; }
 
-    public bool SmtpUseSsl { get; set; } = true;
+    public bool SmtpUseStartTls { get; set; } = true;
 
     public string? SmtpFrom { get; set; }
 
@@ -29,4 +31,8 @@ public class EmailOptions
         !string.IsNullOrWhiteSpace(SmtpHost)
         && !string.IsNullOrWhiteSpace(SmtpUser)
         && !string.IsNullOrWhiteSpace(SmtpPassword);
+
+    /// <summary>The customer-facing URL a notification points at for this ticket.</summary>
+    public string TrackingLinkFor(Ticket ticket) =>
+        $"{TrackingBaseUrl.TrimEnd('/')}/{ticket.Id}";
 }

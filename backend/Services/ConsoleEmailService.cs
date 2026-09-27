@@ -20,7 +20,7 @@ public sealed class ConsoleEmailService : IEmailService
 
     public Task SendTicketCreatedAsync(Ticket ticket, CancellationToken ct = default)
     {
-        Log(CustomerNotification.TicketCreated(ticket, TrackingLink(ticket)));
+        Log(CustomerNotification.TicketCreated(ticket, _options.TrackingLinkFor(ticket)));
         return Task.CompletedTask;
     }
 
@@ -30,18 +30,21 @@ public sealed class ConsoleEmailService : IEmailService
         CancellationToken ct = default
     )
     {
-        Log(CustomerNotification.StatusChanged(ticket, previousStatus, TrackingLink(ticket)));
+        Log(
+            CustomerNotification.StatusChanged(
+                ticket,
+                previousStatus,
+                _options.TrackingLinkFor(ticket)
+            )
+        );
         return Task.CompletedTask;
     }
 
     public Task SendResolutionChangedAsync(Ticket ticket, CancellationToken ct = default)
     {
-        Log(CustomerNotification.ResolutionChanged(ticket, TrackingLink(ticket)));
+        Log(CustomerNotification.ResolutionChanged(ticket, _options.TrackingLinkFor(ticket)));
         return Task.CompletedTask;
     }
-
-    private string TrackingLink(Ticket ticket) =>
-        CustomerNotification.TrackingLink(_options, ticket);
 
     private void Log(CustomerNotification notification) =>
         _logger.LogInformation(

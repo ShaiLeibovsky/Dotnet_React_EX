@@ -19,7 +19,7 @@ internal sealed class TicketApiFactory : WebApplicationFactory<Program>
 
     public RecordingEmailService Emails { get; } = new();
 
-    public Dictionary<string, string?> Settings { get; } = [];
+    public Dictionary<string, string?> ConfigurationOverrides { get; } = [];
 
     public bool KeepConfiguredEmailService { get; init; }
 
@@ -39,7 +39,7 @@ internal sealed class TicketApiFactory : WebApplicationFactory<Program>
             Path.Combine(AppContext.BaseDirectory, "dataset.json")
         );
 
-        foreach (var (key, value) in Settings)
+        foreach (var (key, value) in ConfigurationOverrides)
             builder.UseSetting(key, value);
 
         if (KeepConfiguredEmailService)

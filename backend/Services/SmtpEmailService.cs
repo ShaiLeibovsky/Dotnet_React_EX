@@ -18,39 +18,49 @@ public sealed class SmtpEmailService : IEmailService
     }
 
     public Task SendTicketCreatedAsync(Ticket ticket, CancellationToken ct = default) =>
-        SendAsync(CustomerNotification.TicketCreated(ticket, TrackingLink(ticket)));
+        SendAsync(
+            CustomerNotification.TicketCreated(ticket, _options.TrackingLinkFor(ticket)),
+            ct
+        );
 
     public Task SendStatusChangedAsync(
         Ticket ticket,
         string previousStatus,
         CancellationToken ct = default
-    ) => SendAsync(CustomerNotification.StatusChanged(ticket, previousStatus, TrackingLink(ticket)));
-
-    public Task SendResolutionChangedAsync(Ticket ticket, CancellationToken ct = default) =>
-        SendAsync(CustomerNotification.ResolutionChanged(ticket, TrackingLink(ticket)));
-
-    private string TrackingLink(Ticket ticket) =>
-        CustomerNotification.TrackingLink(_options, ticket);
-
-    private async Task SendAsync(CustomerNotification notification)
-    {
-        // ponytail: System.Net.Mail only speaks STARTTLS and password auth; MailKit if
-        // implicit TLS (465) or OAuth2 is ever needed.
-        using var client = new SmtpClient(_options.SmtpHost, _options.SmtpPort)
-        {
-            EnableSsl = _options.SmtpUseSsl,
-            Credentials = new NetworkCredential(_options.SmtpUser, _options.SmtpPassword),
-        };
-        using var message = new MailMessage(
-            from: _options.SmtpFrom ?? _options.SmtpUser!,
-            to: notification.Recipient,
-            subject: notification.Subject,
-            body: notification.Body
+    ) =>
+        SendAsync(
+            CustomerNotification.StatusChanged(
+                ticket,
+                previousStatus,
+                _options.TrackingLinkFor(ticket)
+            ),
+            ct
         );
 
+    public Task SendResolutionChangedAsync(Ticket ticket, CancellationToken ct = default) =>
+        SendAsync(
+            CustomerNotification.ResolutionChanged(ticket, _options.TrackingLinkFor(ticket)),
+            ct
+        );
+
+    private async Task SendAsync(CustomerNotification notification, CancellationToken ct)
+    {
         try
         {
-            await client.SendMailAsync(message);
+            // ponytail: System.Net.Mail; MailKit if implicit TLS (465) or OAuth2 is needed.
+            using var client = new SmtpClient(_options.SmtpHost, _options.SmtpPort)
+            {
+                EnableSsl = _options.SmtpUseStartTls,
+                Credentials = new NetworkCredential(_options.SmtpUser, _options.SmtpPassword),
+            };
+            using var message = new MailMessage(
+                from: _options.SmtpFrom ?? _options.SmtpUser!,
+                to: notification.Recipient,
+                subject: notification.Subject,
+                body: notification.Body
+            );
+
+            await client.SendMailAsync(message, ct);
         }
         catch (Exception failure)
         {

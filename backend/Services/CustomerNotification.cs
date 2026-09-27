@@ -32,7 +32,4 @@ public sealed record CustomerNotification(string Recipient, string Subject, stri
             $"Hi {ticket.Name}, we added a resolution note: \"{ticket.Resolution}\". "
                 + $"Details: {trackingLink}"
         );
-
-    public static string TrackingLink(EmailOptions options, Ticket ticket) =>
-        $"{options.TrackingBaseUrl.TrimEnd('/')}/{ticket.Id}";
 }
