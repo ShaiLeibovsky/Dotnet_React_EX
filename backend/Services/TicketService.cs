@@ -8,16 +8,19 @@ public sealed class TicketService : ITicketService
 {
     private readonly ITicketStore _store;
     private readonly IEmailService _email;
+    private readonly ISummaryService _summaries;
     private readonly ILogger<TicketService> _logger;
 
     public TicketService(
         ITicketStore store,
         IEmailService email,
+        ISummaryService summaries,
         ILogger<TicketService> logger
     )
     {
         _store = store;
         _email = email;
+        _summaries = summaries;
         _logger = logger;
     }
 
@@ -46,12 +49,11 @@ public sealed class TicketService : ITicketService
             Name = request.Name.Trim(),
             Email = request.Email.Trim(),
             Description = request.Description.Trim(),
+            Summary = await SummariseOrEmptyAsync(request.Description.Trim(), ct),
             Status = TicketStatuses.New,
             CreatedAt = now,
             UpdatedAt = now,
         };
-
-        // BONUS: generate ticket.Summary via an AI service on feature/ai-summary.
 
         var created = await _store.CreateAsync(ticket, ct);
         await _email.SendTicketCreatedAsync(created, ct);
@@ -93,6 +95,22 @@ public sealed class TicketService : ITicketService
             await _email.SendResolutionChangedAsync(updated, ct);
 
         return updated.ToDto();
+    }
+
+    private async Task<string> SummariseOrEmptyAsync(string description, CancellationToken ct)
+    {
+        try
+        {
+            return await _summaries.SummariseAsync(description, ct);
+        }
+        catch (Exception failure)
+        {
+            _logger.LogWarning(
+                failure,
+                "Summary generation failed; creating the ticket without a summary."
+            );
+            return string.Empty;
+        }
     }
 
     // --- validation ---

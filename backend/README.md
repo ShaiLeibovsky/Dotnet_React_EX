@@ -21,6 +21,7 @@ backend/
     ITicketStore / SqliteTicketStore   EF Core persistence, selected by configuration
     ITicketService / TicketService     validation + orchestration + mapping
     IEmailService / ConsoleEmailService notifications (console mock)
+    ISummaryService / GeminiSummaryService  AI summary on create (Null impl with no key)
   Data/                 TicketDbContext, migrations, startup migrate + seed
   Endpoints/TicketEndpoints.cs         /api/tickets route group
 ```
@@ -84,10 +85,29 @@ Server sets `id`, timestamps, and defaults (`status=New`, empty summary/resoluti
 `ConsoleEmailService` logs a simulated email on: ticket created, status changed,
 resolution changed — each with a customer tracking link.
 
+## AI summary
+
+On create, `ISummaryService` is asked for a one-sentence summary of the description,
+stored on the ticket and shown in the ticket table and detail view. With no API key
+configured, `NullSummaryService` is registered and tickets are created with no
+summary — a fresh clone runs correctly with no credentials. Generation is
+best-effort: a provider failure is logged and the ticket is still created.
+
+Supply your own [Gemini API key](https://aistudio.google.com/apikey) through
+user-secrets, so it is never committed:
+
+```bash
+cd backend
+dotnet user-secrets set "Summary:ApiKey" "<your-gemini-api-key>"
+dotnet run
+```
+
+`Summary:Model`, `Summary:TimeoutSeconds` and `Summary:MaxWords` are in
+`appsettings.json`. To turn the feature off again, `dotnet user-secrets remove "Summary:ApiKey"`.
+
 ## Out of scope (future branches)
 
 - `feature/jwt-auth` — admin login + JWT; protect PUT
-- `feature/ai-summary` — AI-generated `summary` on create
 - `feature/email-gmail-smtp` — real email via MailKit + Gmail SMTP
 
 Seams are in place (`IEmailService`, `// BONUS` comments) so each lands without refactoring.

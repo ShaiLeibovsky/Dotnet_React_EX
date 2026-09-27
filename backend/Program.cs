@@ -24,6 +24,9 @@ builder.Services.Configure<TicketStoreOptions>(
 builder.Services.Configure<EmailOptions>(
     builder.Configuration.GetSection(EmailOptions.SectionName)
 );
+builder.Services.Configure<SummaryOptions>(
+    builder.Configuration.GetSection(SummaryOptions.SectionName)
+);
 
 // Application services.
 var storeOptions =
@@ -41,6 +44,25 @@ if (storeIsSqlite)
 else
 {
     builder.Services.AddSingleton<ITicketStore, JsonTicketStore>();
+}
+
+var summaryOptions =
+    builder.Configuration.GetSection(SummaryOptions.SectionName).Get<SummaryOptions>()
+    ?? new SummaryOptions();
+
+if (string.IsNullOrWhiteSpace(summaryOptions.ApiKey))
+{
+    builder.Services.AddSingleton<ISummaryService, NullSummaryService>();
+}
+else
+{
+    builder
+        .Services.AddHttpClient<ISummaryService, GeminiSummaryService>(client =>
+        {
+            client.BaseAddress = new Uri(summaryOptions.BaseAddress);
+            client.Timeout = TimeSpan.FromSeconds(summaryOptions.TimeoutSeconds);
+            client.DefaultRequestHeaders.Add("x-goog-api-key", summaryOptions.ApiKey);
+        });
 }
 
 builder.Services.AddSingleton<IEmailService, ConsoleEmailService>();

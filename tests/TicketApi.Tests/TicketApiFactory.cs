@@ -11,10 +11,15 @@ internal sealed class TicketApiFactory : WebApplicationFactory<Program>
     private readonly string storeDirectory =
         Directory.CreateTempSubdirectory("ticket-api-tests").FullName;
     private readonly TicketStoreProvider provider;
+    private readonly ISummaryService? summaries;
 
-    public TicketApiFactory(TicketStoreProvider provider = TicketStoreProvider.Json)
+    public TicketApiFactory(
+        TicketStoreProvider provider = TicketStoreProvider.Json,
+        ISummaryService? summaries = null
+    )
     {
         this.provider = provider;
+        this.summaries = summaries;
     }
 
     public RecordingEmailService Emails { get; } = new();
@@ -30,6 +35,7 @@ internal sealed class TicketApiFactory : WebApplicationFactory<Program>
             "TicketStore:FilePath",
             Path.Combine(storeDirectory, "tickets.json")
         );
+        builder.UseSetting("Summary:ApiKey", string.Empty);
         builder.UseSetting(
             "TicketStore:SeedPath",
             Path.Combine(AppContext.BaseDirectory, "dataset.json")
@@ -39,6 +45,12 @@ internal sealed class TicketApiFactory : WebApplicationFactory<Program>
         {
             services.RemoveAll<IEmailService>();
             services.AddSingleton<IEmailService>(Emails);
+
+            if (summaries is not null)
+            {
+                services.RemoveAll<ISummaryService>();
+                services.AddSingleton<ISummaryService>(summaries);
+            }
         });
     }
 
