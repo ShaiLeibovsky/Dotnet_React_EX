@@ -19,6 +19,10 @@ internal sealed class TicketApiFactory : WebApplicationFactory<Program>
 
     public RecordingEmailService Emails { get; } = new();
 
+    public Dictionary<string, string?> Settings { get; } = [];
+
+    public bool KeepConfiguredEmailService { get; init; }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("TicketStore:Provider", provider.ToString());
@@ -34,6 +38,12 @@ internal sealed class TicketApiFactory : WebApplicationFactory<Program>
             "TicketStore:SeedPath",
             Path.Combine(AppContext.BaseDirectory, "dataset.json")
         );
+
+        foreach (var (key, value) in Settings)
+            builder.UseSetting(key, value);
+
+        if (KeepConfiguredEmailService)
+            return;
 
         builder.ConfigureServices(services =>
         {

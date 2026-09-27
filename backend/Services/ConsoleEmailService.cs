@@ -20,12 +20,7 @@ public sealed class ConsoleEmailService : IEmailService
 
     public Task SendTicketCreatedAsync(Ticket ticket, CancellationToken ct = default)
     {
-        Log(
-            ticket,
-            "Your support ticket has been created",
-            $"Hi {ticket.Name}, we received your request and will be in touch. "
-                + $"Track it here: {TrackingLink(ticket)}"
-        );
+        Log(CustomerNotification.TicketCreated(ticket, TrackingLink(ticket)));
         return Task.CompletedTask;
     }
 
@@ -35,34 +30,24 @@ public sealed class ConsoleEmailService : IEmailService
         CancellationToken ct = default
     )
     {
-        Log(
-            ticket,
-            $"Ticket status updated: {previousStatus} → {ticket.Status}",
-            $"Hi {ticket.Name}, your ticket status is now \"{ticket.Status}\". "
-                + $"Details: {TrackingLink(ticket)}"
-        );
+        Log(CustomerNotification.StatusChanged(ticket, previousStatus, TrackingLink(ticket)));
         return Task.CompletedTask;
     }
 
     public Task SendResolutionChangedAsync(Ticket ticket, CancellationToken ct = default)
     {
-        Log(
-            ticket,
-            "An update on your ticket resolution",
-            $"Hi {ticket.Name}, we added a resolution note: \"{ticket.Resolution}\". "
-                + $"Details: {TrackingLink(ticket)}"
-        );
+        Log(CustomerNotification.ResolutionChanged(ticket, TrackingLink(ticket)));
         return Task.CompletedTask;
     }
 
     private string TrackingLink(Ticket ticket) =>
-        $"{_options.TrackingBaseUrl.TrimEnd('/')}/{ticket.Id}";
+        CustomerNotification.TrackingLink(_options, ticket);
 
-    private void Log(Ticket ticket, string subject, string body) =>
+    private void Log(CustomerNotification notification) =>
         _logger.LogInformation(
             "[EMAIL] To: {Email} | Subject: {Subject}\n{Body}",
-            ticket.Email,
-            subject,
-            body
+            notification.Recipient,
+            notification.Subject,
+            notification.Body
         );
 }

@@ -43,7 +43,15 @@ else
     builder.Services.AddSingleton<ITicketStore, JsonTicketStore>();
 }
 
-builder.Services.AddSingleton<IEmailService, ConsoleEmailService>();
+var emailOptions =
+    builder.Configuration.GetSection(EmailOptions.SectionName).Get<EmailOptions>()
+    ?? new EmailOptions();
+
+if (emailOptions.SmtpConfigured)
+    builder.Services.AddSingleton<IEmailService, SmtpEmailService>();
+else
+    builder.Services.AddSingleton<IEmailService, ConsoleEmailService>();
+
 builder.Services.AddScoped<ITicketService, TicketService>();
 
 // Allow the Vite dev origin so the frontend can call the API directly.
