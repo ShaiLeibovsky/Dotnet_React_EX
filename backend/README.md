@@ -91,7 +91,8 @@ On create, `ISummaryService` is asked for a one-sentence summary of the descript
 stored on the ticket and shown in the ticket table and detail view. With no API key
 configured, `NullSummaryService` is registered and tickets are created with no
 summary — a fresh clone runs correctly with no credentials. Generation is
-best-effort: a provider failure is logged and the ticket is still created.
+best-effort: a provider failure — or an answer too long to be a summary — is logged
+and the ticket is still created.
 
 Supply your own [Gemini API key](https://aistudio.google.com/apikey) through
 user-secrets, so it is never committed:

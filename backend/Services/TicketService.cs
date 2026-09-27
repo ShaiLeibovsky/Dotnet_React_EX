@@ -44,12 +44,14 @@ public sealed class TicketService : ITicketService
         Validate(request);
 
         var now = DateTime.UtcNow;
+        var description = request.Description.Trim();
+        var summary = await SummariseOrEmptyAsync(description, ct);
         var ticket = new Ticket
         {
             Name = request.Name.Trim(),
             Email = request.Email.Trim(),
-            Description = request.Description.Trim(),
-            Summary = await SummariseOrEmptyAsync(request.Description.Trim(), ct),
+            Description = description,
+            Summary = summary,
             Status = TicketStatuses.New,
             CreatedAt = now,
             UpdatedAt = now,
@@ -102,6 +104,10 @@ public sealed class TicketService : ITicketService
         try
         {
             return await _summaries.SummariseAsync(description, ct);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
         }
         catch (Exception failure)
         {

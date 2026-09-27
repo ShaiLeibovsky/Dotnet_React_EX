@@ -12,14 +12,17 @@ internal sealed class TicketApiFactory : WebApplicationFactory<Program>
         Directory.CreateTempSubdirectory("ticket-api-tests").FullName;
     private readonly TicketStoreProvider provider;
     private readonly ISummaryService? summaries;
+    private readonly HttpMessageHandler? summaryProvider;
 
     public TicketApiFactory(
         TicketStoreProvider provider = TicketStoreProvider.Json,
-        ISummaryService? summaries = null
+        ISummaryService? summaries = null,
+        HttpMessageHandler? summaryProvider = null
     )
     {
         this.provider = provider;
         this.summaries = summaries;
+        this.summaryProvider = summaryProvider;
     }
 
     public RecordingEmailService Emails { get; } = new();
@@ -35,7 +38,10 @@ internal sealed class TicketApiFactory : WebApplicationFactory<Program>
             "TicketStore:FilePath",
             Path.Combine(storeDirectory, "tickets.json")
         );
-        builder.UseSetting("Summary:ApiKey", string.Empty);
+        builder.UseSetting(
+            "Summary:ApiKey",
+            summaryProvider is null ? string.Empty : "test-api-key"
+        );
         builder.UseSetting(
             "TicketStore:SeedPath",
             Path.Combine(AppContext.BaseDirectory, "dataset.json")
@@ -51,6 +57,11 @@ internal sealed class TicketApiFactory : WebApplicationFactory<Program>
                 services.RemoveAll<ISummaryService>();
                 services.AddSingleton<ISummaryService>(summaries);
             }
+
+            if (summaryProvider is not null)
+                services.ConfigureHttpClientDefaults(http =>
+                    http.ConfigurePrimaryHttpMessageHandler(() => summaryProvider)
+                );
         });
     }
 

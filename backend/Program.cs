@@ -59,7 +59,7 @@ else
     builder
         .Services.AddHttpClient<ISummaryService, GeminiSummaryService>(client =>
         {
-            client.BaseAddress = new Uri(summaryOptions.BaseAddress);
+            client.BaseAddress = new Uri(GeminiSummaryService.BaseAddress);
             client.Timeout = TimeSpan.FromSeconds(summaryOptions.TimeoutSeconds);
             client.DefaultRequestHeaders.Add("x-goog-api-key", summaryOptions.ApiKey);
         });

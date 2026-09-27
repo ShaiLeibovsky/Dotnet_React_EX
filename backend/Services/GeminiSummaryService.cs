@@ -7,6 +7,10 @@ namespace TicketApi.Services;
 /// <summary>Summarises a description with the Gemini generateContent endpoint.</summary>
 public sealed class GeminiSummaryService : ISummaryService
 {
+    public const string BaseAddress = "https://generativelanguage.googleapis.com/";
+
+    private const int WordTolerance = 2;
+
     private readonly HttpClient _client;
     private readonly SummaryOptions _options;
 
@@ -34,14 +38,25 @@ public sealed class GeminiSummaryService : ISummaryService
         response.EnsureSuccessStatusCode();
 
         using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
-        var generated = body
-            .RootElement.GetProperty("candidates")[0]
-            .GetProperty("content")
-            .GetProperty("parts")[0]
-            .GetProperty("text")
-            .GetString();
+        var generated =
+            body
+                .RootElement.GetProperty("candidates")[0]
+                .GetProperty("content")
+                .GetProperty("parts")[0]
+                .GetProperty("text")
+                .GetString()
+                ?.Trim() ?? string.Empty;
 
-        return generated?.Trim() ?? string.Empty;
+        var words = generated.Split(
+            (char[]?)null,
+            StringSplitOptions.RemoveEmptyEntries
+        ).Length;
+        if (words > _options.MaxWords * WordTolerance)
+            throw new InvalidOperationException(
+                $"Gemini returned {words} words for a summary of at most {_options.MaxWords}."
+            );
+
+        return generated;
     }
 
     private string Prompt(string description) =>

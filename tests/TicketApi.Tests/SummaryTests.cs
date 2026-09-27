@@ -55,6 +55,80 @@ public class SummaryTests
         Assert.Equal(expected, reread!.Summary);
     }
 
+    [Fact]
+    public async Task WithAKeyConfiguredTheSummaryComesFromTheProvidersResponse()
+    {
+        using var gemini = new StubHttpMessageHandler(GeminiResponse("The engine jams."));
+        using var api = new TicketApiFactory(summaryProvider: gemini);
+        var client = api.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/tickets", Payload);
+        var created = await response.Content.ReadFromJsonAsync<TicketDto>();
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.Equal("The engine jams.", created!.Summary);
+        Assert.Equal(
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+                + "gemini-2.5-flash-lite:generateContent",
+            gemini.LastRequestUri?.ToString()
+        );
+
+        var reread = await client.GetFromJsonAsync<TicketDto>($"/api/tickets/{created.Id}");
+        Assert.Equal("The engine jams.", reread!.Summary);
+    }
+
+    [Fact]
+    public async Task AnAnswerLongerThanASummaryIsDiscarded()
+    {
+        var essay = string.Join(" ", Enumerable.Repeat("words", 60));
+        using var gemini = new StubHttpMessageHandler(GeminiResponse(essay));
+        using var api = new TicketApiFactory(summaryProvider: gemini);
+        var client = api.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/tickets", Payload);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var created = await response.Content.ReadFromJsonAsync<TicketDto>();
+        Assert.Equal(string.Empty, created!.Summary);
+    }
+
+    [Fact]
+    public async Task AnUnusableProviderResponseLeavesTheSummaryEmpty()
+    {
+        using var gemini = new StubHttpMessageHandler("""{"promptFeedback":{}}""");
+        using var api = new TicketApiFactory(summaryProvider: gemini);
+        var client = api.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/tickets", Payload);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var created = await response.Content.ReadFromJsonAsync<TicketDto>();
+        Assert.Equal(string.Empty, created!.Summary);
+    }
+
+    [Fact]
+    public async Task ARateLimitedProviderLeavesTheSummaryEmpty()
+    {
+        using var gemini = new StubHttpMessageHandler("{}", HttpStatusCode.TooManyRequests);
+        using var api = new TicketApiFactory(summaryProvider: gemini);
+        var client = api.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/tickets", Payload);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var created = await response.Content.ReadFromJsonAsync<TicketDto>();
+        Assert.Equal(string.Empty, created!.Summary);
+    }
+
+    private static string GeminiResponse(string text) =>
+        $$"""
+        {
+          "candidates": [
+            { "content": { "parts": [ { "text": "  {{text}}  " } ], "role": "model" } }
+          ]
+        }
+        """;
+
     [Theory]
     [EveryTicketStore]
     public async Task WithNoApiKeyConfiguredTicketsAreCreatedWithNoSummary(

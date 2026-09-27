@@ -32,9 +32,18 @@ otherwise turn a working ticket form into a broken one for a field nobody asked 
 creates the ticket with an empty summary — the same state every ticket had before
 this feature. The tests assert exactly that: a throwing provider still yields a 201.
 
+"Fails" includes returning something unusable: a response without the expected
+`candidates` shape throws while being read, and an answer longer than twice
+`Summary:MaxWords` is rejected rather than stored, because the ticket table renders
+the summary in one line. Both land in the same catch as a network failure.
+
 The cost of this choice is that a silently misconfigured key looks like a working
 application with no summaries. The warning log is the only signal, which is the
 right trade for a bonus feature but would not be for a required one.
+
+Cancellation is the one exception that is not swallowed: if the client disconnects
+mid-create, `OperationCanceledException` is rethrown rather than logged as a
+provider failure.
 
 ### Why a null implementation rather than a feature flag
 
@@ -65,6 +74,12 @@ ever matters, the seam to move behind is `ISummaryService`, unchanged.
   through the API, so there is no staleness to handle yet; a description edit would
   need to re-summarise.
 - `TicketApiFactory` pins `Summary:ApiKey` to empty, so a developer's real key in
-  user-secrets cannot leak into the test suite and make it call the provider.
+  user-secrets cannot leak into the test suite and make it call the provider. Tests
+  that need the Gemini path pass a stub `HttpMessageHandler` instead; the factory
+  then sets a fake key and replaces the primary handler on the client the factory
+  hands out, so the whole registration, prompt and parsing path runs at the HTTP
+  seam with no network call and no unit test below it.
 - The prompt and response parsing are Gemini-shaped. A second provider means a
   second `ISummaryService`, not a change to this one.
+- `Summary:ApiKey` doubles as the on/off switch, so removing it from user-secrets is
+  how the feature is turned off.
