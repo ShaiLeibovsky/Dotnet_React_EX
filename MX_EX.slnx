@@ -1,1 +1,8 @@
-<Solution />
+<Solution>
+  <Folder Name="/backend/">
+    <Project Path="backend/TicketApi.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TicketApi.Tests/TicketApi.Tests.csproj" />
+  </Folder>
+</Solution>
