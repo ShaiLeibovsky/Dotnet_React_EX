@@ -5,10 +5,11 @@ namespace TicketApi.Tests;
 
 public class ListTicketsTests
 {
-    [Fact]
-    public async Task ListingReturnsTheSeededTickets()
+    [Theory]
+    [EveryTicketStore]
+    public async Task ListingReturnsTheSeededTickets(TicketStoreProvider store)
     {
-        using var api = new TicketApiFactory();
+        using var api = new TicketApiFactory(store);
         var client = api.CreateClient();
 
         var listed = await client.GetFromJsonAsync<List<TicketDto>>("/api/tickets");

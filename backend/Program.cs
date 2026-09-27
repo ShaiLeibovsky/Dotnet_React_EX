@@ -1,5 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.EntityFrameworkCore;
+using TicketApi.Data;
 using TicketApi.Endpoints;
 using TicketApi.Services;
 
@@ -24,7 +26,23 @@ builder.Services.Configure<EmailOptions>(
 );
 
 // Application services.
-builder.Services.AddSingleton<ITicketStore, JsonTicketStore>();
+var storeOptions =
+    builder.Configuration.GetSection(TicketStoreOptions.SectionName).Get<TicketStoreOptions>()
+    ?? new TicketStoreOptions();
+var storeIsSqlite = storeOptions.Provider == TicketStoreProvider.Sqlite;
+
+if (storeIsSqlite)
+{
+    builder.Services.AddDbContext<TicketDbContext>(options =>
+        options.UseSqlite($"Data Source={storeOptions.DatabasePath}")
+    );
+    builder.Services.AddScoped<ITicketStore, SqliteTicketStore>();
+}
+else
+{
+    builder.Services.AddSingleton<ITicketStore, JsonTicketStore>();
+}
+
 builder.Services.AddSingleton<IEmailService, ConsoleEmailService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 
@@ -37,6 +55,9 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()));
 
 var app = builder.Build();
+
+if (storeIsSqlite)
+    await TicketDatabase.MigrateAndSeedAsync(app.Services);
 
 // Map ValidationException to a 400 ValidationProblem; everything else to 500.
 app.UseExceptionHandler(handler =>

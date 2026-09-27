@@ -10,11 +10,22 @@ internal sealed class TicketApiFactory : WebApplicationFactory<Program>
 {
     private readonly string storeDirectory =
         Directory.CreateTempSubdirectory("ticket-api-tests").FullName;
+    private readonly TicketStoreProvider provider;
+
+    public TicketApiFactory(TicketStoreProvider provider = TicketStoreProvider.Json)
+    {
+        this.provider = provider;
+    }
 
     public RecordingEmailService Emails { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        builder.UseSetting("TicketStore:Provider", provider.ToString());
+        builder.UseSetting(
+            "TicketStore:DatabasePath",
+            Path.Combine(storeDirectory, "tickets.db")
+        );
         builder.UseSetting(
             "TicketStore:FilePath",
             Path.Combine(storeDirectory, "tickets.json")

@@ -42,7 +42,7 @@ public sealed class JsonTicketStore : ITicketStore, IDisposable
         {
             var tickets = await LoadAsync(ct);
             // Return a defensive copy so callers can't mutate the cache.
-            return tickets.Select(Clone).ToList();
+            return tickets.OrderByDescending(t => t.CreatedAt).Select(Clone).ToList();
         }
         finally
         {
@@ -166,6 +166,7 @@ public sealed class JsonTicketStore : ITicketStore, IDisposable
             Summary = t.Summary,
             Status = t.Status,
             Resolution = t.Resolution,
+            ImageUrl = t.ImageUrl,
             CreatedAt = t.CreatedAt,
             UpdatedAt = t.UpdatedAt,
         };

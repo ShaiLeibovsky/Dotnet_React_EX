@@ -6,10 +6,11 @@ namespace TicketApi.Tests;
 
 public class UpdateTicketTests
 {
-    [Fact]
-    public async Task UnknownIdIsNotFound()
+    [Theory]
+    [EveryTicketStore]
+    public async Task UnknownIdIsNotFound(TicketStoreProvider store)
     {
-        using var api = new TicketApiFactory();
+        using var api = new TicketApiFactory(store);
         var client = api.CreateClient();
 
         var response = await client.PutAsJsonAsync(
@@ -20,10 +21,11 @@ public class UpdateTicketTests
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    [Fact]
-    public async Task StatusOutsideTheFourValuesIsRejectedAndNamesTheField()
+    [Theory]
+    [EveryTicketStore]
+    public async Task StatusOutsideTheFourValuesIsRejectedAndNamesTheField(TicketStoreProvider store)
     {
-        using var api = new TicketApiFactory();
+        using var api = new TicketApiFactory(store);
         var client = api.CreateClient();
         var ticketId = SeededTickets.Load()[0].Id;
 
@@ -36,10 +38,11 @@ public class UpdateTicketTests
         Assert.Contains("Status", await ValidationErrors.FieldNamesAsync(response));
     }
 
-    [Fact]
-    public async Task StatusAndResolutionSurviveALaterRead()
+    [Theory]
+    [EveryTicketStore]
+    public async Task StatusAndResolutionSurviveALaterRead(TicketStoreProvider store)
     {
-        using var api = new TicketApiFactory();
+        using var api = new TicketApiFactory(store);
         var client = api.CreateClient();
         var ticketId = SeededTickets.Load()[0].Id;
 
