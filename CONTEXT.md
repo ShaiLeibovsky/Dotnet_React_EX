@@ -1,20 +1,16 @@
 # Glossary
 
-**Ticket** — a support request raised by a customer. Holds the customer's name and
-email, the issue description, a status, and a resolution.
+**Ticket** — a support request raised by a customer, worked by an admin.
 
-**Status** — where a ticket stands. One of four values:
+**Status** — a ticket's four values run `New` → `In Progress` → `Resolved` → `Closed`.
+`Resolved` means the fix is done and the resolution recorded; `Closed` means no further
+work will happen, fixed or not.
 
-- **New** — raised, not yet picked up.
-- **In Progress** — an admin is working on it.
-- **Resolved** — the issue is fixed and the resolution is recorded.
-- **Closed** — no further work will happen on the ticket.
+**Resolution** — the admin's written account of how the ticket was settled, and the
+thing the customer is emailed about when it changes.
 
-**Resolution** — the admin's written account of how the ticket was settled. Empty
-until an admin records one.
+**Summary** — a restatement of the description, generated rather than written by a
+person.
 
-**Summary** — a short restatement of the issue description, generated rather than
-written by a person. Empty until generated.
-
-**Admin** — a signed-in support staff member. Admins are the only ones who change a
-ticket's status or resolution; customers raise tickets and read them.
+**Admin** — a signed-in support staff member, and the only role meant to change status
+or resolution. Enforced in the UI only; `PUT /api/tickets/{id}` accepts anyone.
