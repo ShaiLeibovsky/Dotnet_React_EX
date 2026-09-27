@@ -15,6 +15,23 @@ You may also use **AI tools** (such as ChatGPT or Gemini) — **as long as you c
 
 ---
 
+## 🔑 Local setup
+
+The admin account and the token signing key come from .NET user-secrets, so no
+credential material is committed:
+
+```bash
+cd backend
+dotnet user-secrets set "Auth:SigningKey" "$(openssl rand -base64 48)"
+dotnet user-secrets set "Auth:AdminPassword" "<choose one>"
+```
+
+The admin email is `Auth:AdminEmail` in `appsettings.json`. The account is created on
+first run. Without a signing key the API still starts with a random one, and tokens
+stop working on every restart. See [ADR-0002](docs/adr/0002-admin-authentication.md).
+
+---
+
 ## 🎯 Objective
 Build a system that allows Customers to:
 - **create new support tickets**

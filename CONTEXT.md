@@ -12,5 +12,10 @@ thing the customer is emailed about when it changes.
 **Summary** — a restatement of the description, generated rather than written by a
 person.
 
-**Admin** — a signed-in support staff member, and the only role meant to change status
-or resolution. Enforced in the UI only; `PUT /api/tickets/{id}` accepts anyone.
+**Admin** — a signed-in support staff member, and the only actor allowed to change
+status or resolution. Enforced by the server: `PUT /api/tickets/{id}` requires a valid
+token, while listing, reading and creating stay open to anyone. Every account in the
+users table is an admin, so there is no role — see ADR-0002.
+
+**Session** — an admin's signed token plus the email it was issued to, held in browser
+local storage and valid for eight hours.

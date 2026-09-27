@@ -43,7 +43,7 @@ public static class TicketEndpoints
         {
             var updated = await service.UpdateAsync(id, request, ct);
             return updated is null ? NotFound(id) : TypedResults.Ok(updated);
-        });
+        }).RequireAuthorization();
 
         return app;
     }
