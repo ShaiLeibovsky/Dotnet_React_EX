@@ -6,10 +6,11 @@ namespace TicketApi.Tests;
 
 public class NotificationTests
 {
-    [Fact]
-    public async Task CreatingATicketTriggersExactlyOneNotification()
+    [Theory]
+    [EveryTicketStore]
+    public async Task CreatingATicketTriggersExactlyOneNotification(TicketStoreProvider store)
     {
-        using var api = new TicketApiFactory();
+        using var api = new TicketApiFactory(store);
         var client = api.CreateClient();
 
         var response = await client.PostAsJsonAsync(
@@ -28,10 +29,11 @@ public class NotificationTests
         Assert.Equal([$"ticket-created:{created!.Id}"], api.Emails.Notifications);
     }
 
-    [Fact]
-    public async Task AStatusChangeTriggersExactlyOneNotification()
+    [Theory]
+    [EveryTicketStore]
+    public async Task AStatusChangeTriggersExactlyOneNotification(TicketStoreProvider store)
     {
-        using var api = new TicketApiFactory();
+        using var api = new TicketApiFactory(store);
         var client = api.CreateClient();
         var ticket = SeededTickets.Load()[0];
 
@@ -47,10 +49,11 @@ public class NotificationTests
         );
     }
 
-    [Fact]
-    public async Task AResolutionChangeTriggersExactlyOneNotification()
+    [Theory]
+    [EveryTicketStore]
+    public async Task AResolutionChangeTriggersExactlyOneNotification(TicketStoreProvider store)
     {
-        using var api = new TicketApiFactory();
+        using var api = new TicketApiFactory(store);
         var client = api.CreateClient();
         var ticket = SeededTickets.Load()[0];
 
@@ -63,10 +66,11 @@ public class NotificationTests
         Assert.Equal([$"resolution-changed:{ticket.Id}"], api.Emails.Notifications);
     }
 
-    [Fact]
-    public async Task SavingWithNoActualChangeTriggersNoNotification()
+    [Theory]
+    [EveryTicketStore]
+    public async Task SavingWithNoActualChangeTriggersNoNotification(TicketStoreProvider store)
     {
-        using var api = new TicketApiFactory();
+        using var api = new TicketApiFactory(store);
         var client = api.CreateClient();
         var ticket = SeededTickets.Load()[0];
 

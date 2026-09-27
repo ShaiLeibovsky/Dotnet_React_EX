@@ -1,13 +1,13 @@
 # Support Tickets — Backend (ASP.NET Core 8, Minimal API)
 
 REST API for the customer-support ticket system. Persists to a JSON file
-server-side and serves the React frontend in `../frontend`.
+server-side (or SQLite, by configuration) and serves the React frontend in `../frontend`.
 
 ## Stack
 
 - .NET 8 (LTS), ASP.NET Core **Minimal API**
 - System.Text.Json (camelCase), Swashbuckle/OpenAPI
-- JSON-file storage (no database)
+- JSON-file storage by default, EF Core + SQLite as an alternative store
 
 ## Architecture
 
@@ -17,14 +17,16 @@ backend/
   Entities/             Ticket (+ status constant set)
   Dtos/                 Create/Update requests, TicketDto, mapping
   Services/
-    ITicketStore / JsonTicketStore     thread-safe JSON persistence (the only file I/O)
+    ITicketStore / JsonTicketStore     thread-safe JSON-file persistence
+    ITicketStore / SqliteTicketStore   EF Core persistence, selected by configuration
     ITicketService / TicketService     validation + orchestration + mapping
     IEmailService / ConsoleEmailService notifications (console mock)
+  Data/                 TicketDbContext, migrations, startup migrate + seed
   Endpoints/TicketEndpoints.cs         /api/tickets route group
 ```
 
 Layering: endpoints → `ITicketService` → `ITicketStore` / `IEmailService`.
-Endpoints never touch the file or business rules directly.
+Endpoints never touch storage or business rules directly.
 
 ## Run
 
@@ -36,6 +38,22 @@ dotnet run            # http://localhost:5006  (Swagger UI at /swagger in Develo
 
 On first run the store seeds from the repo-root `dataset.json` into a local
 `tickets.json` (gitignored), so the original dataset stays intact.
+
+## Storage
+
+`TicketStore:Provider` selects the store: `Json` (default) or `Sqlite`. The SQLite
+store migrates its schema on startup and seeds from `dataset.json` when the ticket
+table is empty, into the gitignored `TicketStore:DatabasePath` file.
+
+```bash
+dotnet run -- --TicketStore:Provider=Sqlite
+```
+
+EF tooling needs the same switch, since the context is only registered for SQLite:
+
+```bash
+dotnet ef migrations add <Name> -- --TicketStore:Provider=Sqlite
+```
 
 With the backend running, start the frontend (`cd ../frontend && bun run dev`) —
 create and edit persist to disk. With the backend stopped, the frontend screens

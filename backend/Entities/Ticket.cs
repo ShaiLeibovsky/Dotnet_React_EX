@@ -1,6 +1,6 @@
 namespace TicketApi.Entities;
 
-/// <summary>A customer support ticket persisted in the JSON store.</summary>
+/// <summary>A customer support ticket.</summary>
 public class Ticket
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -15,6 +15,9 @@ public class Ticket
     public string Status { get; set; } = TicketStatuses.New;
 
     public string Resolution { get; set; } = string.Empty;
+
+    /// <summary>Path or URL of the image the customer attached, relative to the API host.</summary>
+    public string ImageUrl { get; set; } = string.Empty;
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

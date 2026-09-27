@@ -6,10 +6,11 @@ namespace TicketApi.Tests;
 
 public class CreateTicketTests
 {
-    [Fact]
-    public async Task ValidPayloadReturnsTheCreatedTicketWithAGeneratedId()
+    [Theory]
+    [EveryTicketStore]
+    public async Task ValidPayloadReturnsTheCreatedTicketWithAGeneratedId(TicketStoreProvider store)
     {
-        using var api = new TicketApiFactory();
+        using var api = new TicketApiFactory(store);
         var client = api.CreateClient();
 
         var response = await client.PostAsJsonAsync(
@@ -35,10 +36,11 @@ public class CreateTicketTests
         Assert.Equal(created.Id, reread?.Id);
     }
 
-    [Fact]
-    public async Task EachCreatedTicketGetsItsOwnId()
+    [Theory]
+    [EveryTicketStore]
+    public async Task EachCreatedTicketGetsItsOwnId(TicketStoreProvider store)
     {
-        using var api = new TicketApiFactory();
+        using var api = new TicketApiFactory(store);
         var client = api.CreateClient();
         var payload = new
         {
@@ -55,10 +57,11 @@ public class CreateTicketTests
         Assert.NotEqual(firstId, secondId);
     }
 
-    [Fact]
-    public async Task MissingNameIsRejectedAndNamesTheField()
+    [Theory]
+    [EveryTicketStore]
+    public async Task MissingNameIsRejectedAndNamesTheField(TicketStoreProvider store)
     {
-        using var api = new TicketApiFactory();
+        using var api = new TicketApiFactory(store);
         var client = api.CreateClient();
 
         var response = await client.PostAsJsonAsync(
@@ -70,10 +73,11 @@ public class CreateTicketTests
         Assert.Contains("Name", await ValidationErrors.FieldNamesAsync(response));
     }
 
-    [Fact]
-    public async Task MalformedEmailIsRejectedAndNamesTheField()
+    [Theory]
+    [EveryTicketStore]
+    public async Task MalformedEmailIsRejectedAndNamesTheField(TicketStoreProvider store)
     {
-        using var api = new TicketApiFactory();
+        using var api = new TicketApiFactory(store);
         var client = api.CreateClient();
 
         var response = await client.PostAsJsonAsync(

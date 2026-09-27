@@ -5,3 +5,8 @@ appsettings.*.local.json
 
 # Runtime data file (seeded from the repo-root dataset.json on first run)
 tickets.json
+
+# SQLite database (migrated and seeded on first run)
+tickets.db
+tickets.db-shm
+tickets.db-wal

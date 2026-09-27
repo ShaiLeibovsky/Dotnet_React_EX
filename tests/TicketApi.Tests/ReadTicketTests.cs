@@ -4,10 +4,11 @@ namespace TicketApi.Tests;
 
 public class ReadTicketTests
 {
-    [Fact]
-    public async Task UnknownIdIsNotFound()
+    [Theory]
+    [EveryTicketStore]
+    public async Task UnknownIdIsNotFound(TicketStoreProvider store)
     {
-        using var api = new TicketApiFactory();
+        using var api = new TicketApiFactory(store);
         var client = api.CreateClient();
 
         var response = await client.GetAsync("/api/tickets/does-not-exist");
