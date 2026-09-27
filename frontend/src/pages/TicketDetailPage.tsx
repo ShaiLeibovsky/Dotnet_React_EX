@@ -1,11 +1,5 @@
 import { useState } from 'react'
-import {
-    Link,
-    useLoaderData,
-    useRevalidator,
-    useRouteError,
-    type LoaderFunctionArgs,
-} from 'react-router-dom'
+import { Link, useLoaderData, useRevalidator } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ArrowLeft, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -19,34 +13,10 @@ import {
     SelectValue,
 } from '@/components/ui/select'
 import { StatusBadge } from '@/components/tickets/StatusBadge'
-import { ErrorRetry } from '@/components/tickets/ErrorRetry'
-import { ApiError, getTicket, updateTicket } from '@/api/ticketsApi'
+import { updateTicket } from '@/api/ticketsApi'
 import { formatDateTime } from '@/lib/format'
 import { useAuth } from '@/context/AuthContext'
 import { STATUSES, type Ticket, type TicketStatus } from '@/types/ticket'
-
-export const ticketLoader = ({ params }: LoaderFunctionArgs): Promise<Ticket> =>
-    getTicket(params.id ?? '')
-
-export const TicketLoadError = () => {
-    const error = useRouteError()
-    const revalidator = useRevalidator()
-    const message =
-        error instanceof ApiError && error.status === 404
-            ? 'No ticket exists with this id.'
-            : 'Could not load this ticket. The server is unreachable.'
-
-    return (
-        <div className="mx-auto max-w-5xl px-4 py-8">
-            <ErrorRetry message={message} onRetry={() => revalidator.revalidate()} />
-            <Button asChild variant="link" className="mt-4 px-0">
-                <Link to="/">
-                    <ArrowLeft className="size-4" /> All tickets
-                </Link>
-            </Button>
-        </div>
-    )
-}
 
 export const TicketDetailPage = () => {
     const ticket = useLoaderData() as Ticket

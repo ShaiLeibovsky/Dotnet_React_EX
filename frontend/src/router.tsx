@@ -1,17 +1,10 @@
-import { createBrowserRouter, Outlet } from 'react-router-dom'
-import { Header } from '@/components/layout/Header'
+import { createBrowserRouter } from 'react-router-dom'
+import { AppLayout } from '@/components/layout/AppLayout'
+import { TicketLoadError } from '@/components/tickets/TicketLoadError'
+import { ticketLoader } from '@/loaders/ticketLoader'
 import { TicketsPage } from '@/pages/TicketsPage'
-import { TicketDetailPage, TicketLoadError, ticketLoader } from '@/pages/TicketDetailPage'
+import { TicketDetailPage } from '@/pages/TicketDetailPage'
 import { LoginPage } from '@/pages/LoginPage'
-
-const AppLayout = () => (
-    <div className="min-h-screen">
-        <Header />
-        <main>
-            <Outlet />
-        </main>
-    </div>
-)
 
 export const router = createBrowserRouter([
     {
