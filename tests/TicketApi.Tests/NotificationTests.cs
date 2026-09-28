@@ -26,7 +26,7 @@ public class NotificationTests
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var created = await response.Content.ReadFromJsonAsync<TicketDto>();
 
-        Assert.Equal([$"ticket-created:{created!.Id}"], api.Emails.Notifications);
+        Assert.Equal([$"ticket-created:{created!.Id}"], api.Notifier.Notifications);
     }
 
     [Theory]
@@ -45,7 +45,7 @@ public class NotificationTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(
             [$"status-changed:{ticket.Id}:{ticket.Status}->In Progress"],
-            api.Emails.Notifications
+            api.Notifier.Notifications
         );
     }
 
@@ -63,7 +63,7 @@ public class NotificationTests
         );
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal([$"resolution-changed:{ticket.Id}"], api.Emails.Notifications);
+        Assert.Equal([$"resolution-changed:{ticket.Id}"], api.Notifier.Notifications);
     }
 
     [Theory]
@@ -80,6 +80,6 @@ public class NotificationTests
         );
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Empty(api.Emails.Notifications);
+        Assert.Empty(api.Notifier.Notifications);
     }
 }

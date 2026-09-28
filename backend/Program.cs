@@ -57,7 +57,15 @@ if (storeIsSqlite)
 else
     builder.Services.AddSingleton<ITicketStore, JsonTicketStore>();
 
-builder.Services.AddSingleton<IEmailService, ConsoleEmailService>();
+var emailOptions =
+    builder.Configuration.GetSection(EmailOptions.SectionName).Get<EmailOptions>()
+    ?? new EmailOptions();
+
+if (emailOptions.SmtpConfigured)
+    builder.Services.AddSingleton<ICustomerNotifier, EmailNotifier>();
+else
+    builder.Services.AddSingleton<ICustomerNotifier, LogNotifier>();
+
 builder.Services.AddSingleton<IPasswordHasher<AdminUser>, PasswordHasher<AdminUser>>();
 builder.Services.AddScoped<AdminAuthService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
@@ -100,6 +108,11 @@ if (signingKeyIsEphemeral)
     );
 
 await TicketDatabase.MigrateAndSeedAsync(app.Services, seedTickets: storeIsSqlite);
+
+app.Logger.LogInformation(
+    "Customer notifications are delivered by {Notifier}.",
+    app.Services.GetRequiredService<ICustomerNotifier>().GetType().Name
+);
 
 // Map ValidationException to a 400 ValidationProblem; everything else to 500.
 app.UseExceptionHandler(handler =>

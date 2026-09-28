@@ -23,7 +23,11 @@ internal sealed class TicketApiFactory : WebApplicationFactory<Program>
         this.provider = provider;
     }
 
-    public RecordingEmailService Emails { get; } = new();
+    public RecordingNotifier Notifier { get; } = new();
+
+    public Dictionary<string, string?> ConfigurationOverrides { get; } = [];
+
+    public bool KeepConfiguredNotifier { get; init; }
 
     /// <summary>A client carrying a bearer token for the seeded admin account.</summary>
     public async Task<HttpClient> CreateAdminClientAsync()
@@ -61,10 +65,16 @@ internal sealed class TicketApiFactory : WebApplicationFactory<Program>
             Path.Combine(AppContext.BaseDirectory, "dataset.json")
         );
 
+        foreach (var (key, value) in ConfigurationOverrides)
+            builder.UseSetting(key, value);
+
+        if (KeepConfiguredNotifier)
+            return;
+
         builder.ConfigureServices(services =>
         {
-            services.RemoveAll<IEmailService>();
-            services.AddSingleton<IEmailService>(Emails);
+            services.RemoveAll<ICustomerNotifier>();
+            services.AddSingleton<ICustomerNotifier>(Notifier);
         });
     }
 

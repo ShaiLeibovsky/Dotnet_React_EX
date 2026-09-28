@@ -3,12 +3,10 @@ using TicketApi.Entities;
 namespace TicketApi.Services;
 
 /// <summary>
-/// Customer notifications. The console implementation only logs; a real provider
-/// (e.g. Gmail SMTP via MailKit) can be swapped in behind this seam on a later
-/// branch without touching endpoints or the ticket service.
+/// One customer notification channel. <see cref="LogNotifier"/> logs and is the default;
+/// <see cref="EmailNotifier"/> delivers by email once SMTP credentials are configured.
 /// </summary>
-// BONUS: real delivery on feature/email-gmail-smtp.
-public interface IEmailService
+public interface ICustomerNotifier
 {
     Task SendTicketCreatedAsync(Ticket ticket, CancellationToken ct = default);
 
