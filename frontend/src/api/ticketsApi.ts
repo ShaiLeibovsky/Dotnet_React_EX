@@ -1,3 +1,4 @@
+import { session } from '@/lib/session'
 import type { CreateTicketInput, Ticket, UpdateTicketInput } from '@/types/ticket'
 
 const BASE = '/api'
@@ -12,10 +13,19 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
+    const token = session.read()?.token
     const response = await fetch(`${BASE}${path}`, {
-        headers: { 'Content-Type': 'application/json' },
         ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...options?.headers,
+        },
     })
+    if (response.status === 401 && token) {
+        session.clear()
+        window.location.assign('/login')
+    }
     if (!response.ok) throw new ApiError(response.status, path)
     return (await response.json()) as T
 }

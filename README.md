@@ -15,6 +15,27 @@ You may also use **AI tools** (such as ChatGPT or Gemini) — **as long as you c
 
 ---
 
+## 🔑 Local setup
+
+The admin account comes from .NET user-secrets, so no credential material is committed:
+
+```bash
+cd backend
+dotnet user-secrets set "Auth:AdminEmail" "<a mailbox you read>"
+dotnet user-secrets set "Auth:AdminPassword" "<choose one>"
+```
+
+The account is created on first run, and only when both the email and the password are
+set. That email also reaches customers as the `Reply-To` on tickets this admin edits, so
+point it at a real mailbox.
+
+The token signing key needs no setup: with no `Auth:SigningKey` configured the API
+generates one and keeps it in a gitignored file beside the database, so tokens survive a
+restart. A deployment sets `Auth:SigningKey` from the environment and that wins. See
+[ADR-0002](docs/adr/0002-admin-authentication.md).
+
+---
+
 ## 🎯 Objective
 Build a system that allows Customers to:
 - **create new support tickets**
@@ -95,6 +116,32 @@ Simulate sending an email to the customer in the following cases:
 1. After creating a new ticket  
 2. Whenever the **status** changes  
 3. Whenever the **resolution text** changes  
+
+### Supplying your own SMTP credentials
+
+Out of the box the backend logs each notification to the console, so the app runs with no
+mail provider configured. Supply SMTP credentials through .NET user-secrets and the same
+three notifications are delivered by email instead — nothing is committed to the repo:
+
+```bash
+cd backend
+dotnet user-secrets set "Email:SmtpHost" "smtp.gmail.com"
+dotnet user-secrets set "Email:SmtpUser" "you@gmail.com"
+dotnet user-secrets set "Email:SmtpPassword" "your-16-char-app-password"
+```
+
+All three keys must be present; with any of them missing, console logging stays in place. The
+backend logs which of the two it chose on startup. User-secrets are only read in the
+`Development` environment, which is what `dotnet run` uses; elsewhere supply the same keys as
+environment variables (`Email__SmtpHost`, `Email__SmtpUser`, `Email__SmtpPassword`).
+Optional keys: `Email:SmtpPort` (default `587`), `Email:SmtpFrom` (defaults to `SmtpUser`),
+`Email:SmtpUseStartTls` (default `true`), and `Email:TrackingBaseUrl` for the link in the
+ticket-created message.
+
+Gmail needs an [app password](https://support.google.com/accounts/answer/185833), not your
+account password. Delivery uses STARTTLS submission (port 587); implicit-TLS ports such as
+465 are not supported. A failed send is logged and never fails the API request that
+triggered it.
 
 ---
 

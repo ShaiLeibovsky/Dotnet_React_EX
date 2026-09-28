@@ -24,7 +24,7 @@ public class ImageUrlTests
     public async Task UpdatingATicketKeepsItsImageUrl(TicketStoreProvider store)
     {
         using var api = new TicketApiFactory(store);
-        var client = api.CreateClient();
+        var client = await api.CreateAdminClientAsync();
         var ticketId = SeededTickets.Load()[0].Id;
         var imageUrlBefore = (await ReadStoredTicketsAsync(api))
             .Single(ticket => ticket.Id == ticketId)

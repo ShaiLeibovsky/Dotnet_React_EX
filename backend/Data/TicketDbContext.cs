@@ -17,6 +17,8 @@ public sealed class TicketDbContext : DbContext
 
     public DbSet<Ticket> Tickets => Set<Ticket>();
 
+    public DbSet<AdminUser> Admins => Set<AdminUser>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Ticket>(ticket =>
@@ -31,6 +33,14 @@ public sealed class TicketDbContext : DbContext
             ticket.Property(t => t.ImageUrl).IsRequired();
             ticket.Property(t => t.CreatedAt).HasConversion(UtcDateTime);
             ticket.Property(t => t.UpdatedAt).HasConversion(UtcDateTime);
+        });
+
+        modelBuilder.Entity<AdminUser>(admin =>
+        {
+            admin.HasKey(a => a.Id);
+            admin.HasIndex(a => a.Email).IsUnique();
+            admin.Property(a => a.Email).IsRequired();
+            admin.Property(a => a.PasswordHash).IsRequired();
         });
     }
 }

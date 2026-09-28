@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using TicketApi.Entities;
@@ -11,21 +12,64 @@ public static class TicketDatabase
     private static readonly JsonSerializerOptions SeedJsonOptions =
         new(JsonSerializerDefaults.Web);
 
-    public static async Task MigrateAndSeedAsync(IServiceProvider services)
+    public static async Task MigrateAndSeedAsync(IServiceProvider services, bool seedTickets)
     {
         using var scope = services.CreateScope();
-        var tickets = scope.ServiceProvider.GetRequiredService<TicketDbContext>();
+        var database = scope.ServiceProvider.GetRequiredService<TicketDbContext>();
         var logger = scope
             .ServiceProvider.GetRequiredService<ILoggerFactory>()
             .CreateLogger(typeof(TicketDatabase).FullName!);
-        var seedPath = scope
-            .ServiceProvider.GetRequiredService<IOptions<TicketStoreOptions>>()
-            .Value.SeedPath;
 
-        await tickets.Database.MigrateAsync();
+        await database.Database.MigrateAsync();
+        await SeedAdminAsync(scope.ServiceProvider, database, logger);
 
-        if (await tickets.Tickets.AnyAsync())
+        if (seedTickets)
+            await SeedTicketsAsync(scope.ServiceProvider, database, logger);
+    }
+
+    private static async Task SeedAdminAsync(
+        IServiceProvider services,
+        TicketDbContext database,
+        ILogger logger
+    )
+    {
+        var authOptions = services.GetRequiredService<IOptions<AuthOptions>>().Value;
+
+        if (string.IsNullOrWhiteSpace(authOptions.AdminEmail) || string.IsNullOrWhiteSpace(authOptions.AdminPassword))
+        {
+            logger.LogWarning(
+                "No Auth:AdminEmail / Auth:AdminPassword configured; no admin account seeded. "
+                    + "Set both through user-secrets to sign in."
+            );
             return;
+        }
+
+        var email = AdminAuthService.NormalizedEmail(authOptions.AdminEmail);
+        if (await database.Admins.AnyAsync(existing => existing.Email == email))
+            return;
+
+        var admin = new AdminUser { Email = email };
+        admin.PasswordHash = services
+            .GetRequiredService<IPasswordHasher<AdminUser>>()
+            .HashPassword(admin, authOptions.AdminPassword);
+
+        database.Admins.Add(admin);
+        await database.SaveChangesAsync();
+        logger.LogInformation("Seeded the admin account {Email}.", admin.Email);
+    }
+
+    private static async Task SeedTicketsAsync(
+        IServiceProvider services,
+        TicketDbContext database,
+        ILogger logger
+    )
+    {
+        if (await database.Tickets.AnyAsync())
+            return;
+
+        var seedPath = services
+            .GetRequiredService<IOptions<TicketStoreOptions>>()
+            .Value.SeedPath;
 
         if (string.IsNullOrWhiteSpace(seedPath) || !File.Exists(seedPath))
         {
@@ -41,7 +85,7 @@ public static class TicketDatabase
         var seeded =
             await JsonSerializer.DeserializeAsync<List<Ticket>>(seedStream, SeedJsonOptions)
             ?? [];
-        tickets.Tickets.AddRange(seeded);
-        await tickets.SaveChangesAsync();
+        database.Tickets.AddRange(seeded);
+        await database.SaveChangesAsync();
     }
 }

@@ -23,7 +23,9 @@ export const LoginPage = () => {
             await login(email, password)
             navigate('/')
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Login failed')
+            setError(
+                err instanceof Error ? err.message : 'Sign in failed. Please try again.',
+            )
         } finally {
             setBusy(false)
         }
@@ -40,6 +42,8 @@ export const LoginPage = () => {
                             <Label htmlFor="lg-email">Email address</Label>
                             <Input
                                 id="lg-email"
+                                type="email"
+                                required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 autoComplete="username"
@@ -50,6 +54,7 @@ export const LoginPage = () => {
                             <Input
                                 id="lg-pass"
                                 type="password"
+                                required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 autoComplete="current-password"
@@ -63,7 +68,7 @@ export const LoginPage = () => {
                 </CardContent>
             </Card>
             <p className="text-muted-foreground mt-4 text-sm">
-                Admin login POC — any email + password works in this demo.
+                Only signed-in admins may edit a ticket. Anyone may open one.
             </p>
         </div>
     )

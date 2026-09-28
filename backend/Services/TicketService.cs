@@ -7,19 +7,19 @@ namespace TicketApi.Services;
 public sealed class TicketService : ITicketService
 {
     private readonly ITicketStore _store;
-    private readonly IEmailService _email;
+    private readonly ICustomerNotifier _notifier;
     private readonly ISummaryService _summaries;
     private readonly ILogger<TicketService> _logger;
 
     public TicketService(
         ITicketStore store,
-        IEmailService email,
+        ICustomerNotifier notifier,
         ISummaryService summaries,
         ILogger<TicketService> logger
     )
     {
         _store = store;
-        _email = email;
+        _notifier = notifier;
         _summaries = summaries;
         _logger = logger;
     }
@@ -58,13 +58,14 @@ public sealed class TicketService : ITicketService
         };
 
         var created = await _store.CreateAsync(ticket, ct);
-        await _email.SendTicketCreatedAsync(created, ct);
+        await _notifier.SendTicketCreatedAsync(created, ct);
         return created.ToDto();
     }
 
     public async Task<TicketDto?> UpdateAsync(
         string id,
         UpdateTicketRequest request,
+        string? handlingAdminEmail,
         CancellationToken ct = default
     )
     {
@@ -92,9 +93,14 @@ public sealed class TicketService : ITicketService
             return null;
 
         if (updated.Status != previousStatus)
-            await _email.SendStatusChangedAsync(updated, previousStatus, ct);
+            await _notifier.SendStatusChangedAsync(
+                updated,
+                previousStatus,
+                handlingAdminEmail,
+                ct
+            );
         if (updated.Resolution != previousResolution)
-            await _email.SendResolutionChangedAsync(updated, ct);
+            await _notifier.SendResolutionChangedAsync(updated, handlingAdminEmail, ct);
 
         return updated.ToDto();
     }

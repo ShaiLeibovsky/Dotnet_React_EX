@@ -20,13 +20,14 @@ backend/
     ITicketStore / JsonTicketStore     thread-safe JSON-file persistence
     ITicketStore / SqliteTicketStore   EF Core persistence, selected by configuration
     ITicketService / TicketService     validation + orchestration + mapping
-    IEmailService / ConsoleEmailService notifications (console mock)
+    ICustomerNotifier / LogNotifier    notification channel that only logs (the default)
+    ICustomerNotifier / EmailNotifier  notification channel over SMTP, when configured
     ISummaryService / GeminiSummaryService  AI summary on create (Null impl with no key)
   Data/                 TicketDbContext, migrations, startup migrate + seed
   Endpoints/TicketEndpoints.cs         /api/tickets route group
 ```
 
-Layering: endpoints → `ITicketService` → `ITicketStore` / `IEmailService`.
+Layering: endpoints → `ITicketService` → `ITicketStore` / `ICustomerNotifier`.
 Endpoints never touch storage or business rules directly.
 
 ## Run
@@ -82,8 +83,14 @@ Server sets `id`, timestamps, and defaults (`status=New`, empty summary/resoluti
 
 ## Notifications
 
-`ConsoleEmailService` logs a simulated email on: ticket created, status changed,
+`LogNotifier` logs each notification on: ticket created, status changed,
 resolution changed — each with a customer tracking link.
+
+`EmailNotifier` sends the same three by email, and replaces `LogNotifier` whenever
+`Email:SmtpHost`, `Email:SmtpUser` and `Email:SmtpPassword` are all configured (user-secrets
+in Development, environment variables elsewhere). The chosen one is logged on startup. A send
+failure is logged and never fails the request that triggered it. See the root README for the
+reviewer-facing setup.
 
 ## AI summary
 
@@ -106,9 +113,3 @@ dotnet run
 `Summary:Model`, `Summary:TimeoutSeconds` and `Summary:MaxWords` are in
 `appsettings.json`. To turn the feature off again, `dotnet user-secrets remove "Summary:ApiKey"`.
 
-## Out of scope (future branches)
-
-- `feature/jwt-auth` — admin login + JWT; protect PUT
-- `feature/email-gmail-smtp` — real email via MailKit + Gmail SMTP
-
-Seams are in place (`IEmailService`, `// BONUS` comments) so each lands without refactoring.

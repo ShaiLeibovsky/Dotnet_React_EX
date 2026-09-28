@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using TicketApi.Dtos;
 using TicketApi.Services;
 
@@ -37,16 +38,20 @@ public static class TicketEndpoints
         group.MapPut("/{id}", async Task<IResult> (
             string id,
             UpdateTicketRequest request,
+            ClaimsPrincipal admin,
             ITicketService service,
             CancellationToken ct
         ) =>
         {
-            var updated = await service.UpdateAsync(id, request, ct);
+            var updated = await service.UpdateAsync(id, request, EmailOf(admin), ct);
             return updated is null ? NotFound(id) : TypedResults.Ok(updated);
-        });
+        }).RequireAuthorization();
 
         return app;
     }
+
+    private static string? EmailOf(ClaimsPrincipal admin) =>
+        admin.FindFirstValue(ClaimTypes.Email) ?? admin.FindFirstValue("email");
 
     private static IResult NotFound(string id) =>
         TypedResults.Problem(

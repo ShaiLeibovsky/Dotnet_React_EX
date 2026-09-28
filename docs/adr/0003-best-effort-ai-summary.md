@@ -1,4 +1,4 @@
-# ADR-0002: Best-effort AI summaries, with a null implementation instead of a feature flag
+# ADR-0003: Best-effort AI summaries, with a null implementation instead of a feature flag
 
 - Status: accepted
 - Date: 2026-09-27
@@ -23,7 +23,7 @@ result is persisted with the ticket. `GeminiSummaryService` calls the Gemini
 base address and timeout. The key comes from `Summary:ApiKey`, set through
 user-secrets.
 
-### Why best-effort rather than failing the create
+### 1. Why best-effort rather than failing the create
 
 The summary's value to the customer is zero: they never see it, and the description
 they wrote is stored regardless. A provider outage, a rate limit or a timeout would
@@ -45,7 +45,7 @@ Cancellation is the one exception that is not swallowed: if the client disconnec
 mid-create, `OperationCanceledException` is rethrown rather than logged as a
 provider failure.
 
-### Why a null implementation rather than a feature flag
+### 2. Why a null implementation rather than a feature flag
 
 Both make the feature optional. The difference is where the optionality lives:
 
@@ -59,7 +59,7 @@ The key's presence *is* the flag, so a separate `Summary:Enabled` would be a sec
 switch that can disagree with the first — configured key, feature off, no
 explanation. Registering by key presence makes that state unrepresentable.
 
-### Why the summary is generated inline rather than in the background
+### 3. Why the summary is generated inline rather than in the background
 
 Inline is one call in a method that already awaits a store write and an email. A
 background job would need a queue, a worker, and a way for the frontend to learn the

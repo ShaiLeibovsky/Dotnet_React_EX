@@ -26,7 +26,7 @@ public class NotificationTests
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var created = await response.Content.ReadFromJsonAsync<TicketDto>();
 
-        Assert.Equal([$"ticket-created:{created!.Id}"], api.Emails.Notifications);
+        Assert.Equal([$"ticket-created:{created!.Id}"], api.Notifier.Notifications);
     }
 
     [Theory]
@@ -34,7 +34,7 @@ public class NotificationTests
     public async Task AStatusChangeTriggersExactlyOneNotification(TicketStoreProvider store)
     {
         using var api = new TicketApiFactory(store);
-        var client = api.CreateClient();
+        var client = await api.CreateAdminClientAsync();
         var ticket = SeededTickets.Load()[0];
 
         var response = await client.PutAsJsonAsync(
@@ -45,8 +45,9 @@ public class NotificationTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal(
             [$"status-changed:{ticket.Id}:{ticket.Status}->In Progress"],
-            api.Emails.Notifications
+            api.Notifier.Notifications
         );
+        Assert.Equal([TicketApiFactory.AdminEmail], api.Notifier.ReplyTos);
     }
 
     [Theory]
@@ -54,7 +55,7 @@ public class NotificationTests
     public async Task AResolutionChangeTriggersExactlyOneNotification(TicketStoreProvider store)
     {
         using var api = new TicketApiFactory(store);
-        var client = api.CreateClient();
+        var client = await api.CreateAdminClientAsync();
         var ticket = SeededTickets.Load()[0];
 
         var response = await client.PutAsJsonAsync(
@@ -63,7 +64,7 @@ public class NotificationTests
         );
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal([$"resolution-changed:{ticket.Id}"], api.Emails.Notifications);
+        Assert.Equal([$"resolution-changed:{ticket.Id}"], api.Notifier.Notifications);
     }
 
     [Theory]
@@ -71,7 +72,7 @@ public class NotificationTests
     public async Task SavingWithNoActualChangeTriggersNoNotification(TicketStoreProvider store)
     {
         using var api = new TicketApiFactory(store);
-        var client = api.CreateClient();
+        var client = await api.CreateAdminClientAsync();
         var ticket = SeededTickets.Load()[0];
 
         var response = await client.PutAsJsonAsync(
@@ -80,6 +81,6 @@ public class NotificationTests
         );
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Empty(api.Emails.Notifications);
+        Assert.Empty(api.Notifier.Notifications);
     }
 }
