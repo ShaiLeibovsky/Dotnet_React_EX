@@ -65,6 +65,8 @@ internal sealed class TicketApiFactory : WebApplicationFactory<Program>
             Path.Combine(AppContext.BaseDirectory, "dataset.json")
         );
 
+        ClearInheritedSmtpCredentials(builder);
+
         foreach (var (key, value) in ConfigurationOverrides)
             builder.UseSetting(key, value);
 
@@ -76,6 +78,13 @@ internal sealed class TicketApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<ICustomerNotifier>();
             services.AddSingleton<ICustomerNotifier>(Notifier);
         });
+    }
+
+    private static void ClearInheritedSmtpCredentials(IWebHostBuilder builder)
+    {
+        builder.UseSetting("Email:SmtpHost", null);
+        builder.UseSetting("Email:SmtpUser", null);
+        builder.UseSetting("Email:SmtpPassword", null);
     }
 
     protected override void Dispose(bool disposing)
