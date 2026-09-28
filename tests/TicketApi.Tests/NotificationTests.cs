@@ -34,7 +34,7 @@ public class NotificationTests
     public async Task AStatusChangeTriggersExactlyOneNotification(TicketStoreProvider store)
     {
         using var api = new TicketApiFactory(store);
-        var client = api.CreateClient();
+        var client = await api.CreateAdminClientAsync();
         var ticket = SeededTickets.Load()[0];
 
         var response = await client.PutAsJsonAsync(
@@ -47,6 +47,7 @@ public class NotificationTests
             [$"status-changed:{ticket.Id}:{ticket.Status}->In Progress"],
             api.Notifier.Notifications
         );
+        Assert.Equal([TicketApiFactory.AdminEmail], api.Notifier.ReplyTos);
     }
 
     [Theory]
@@ -54,7 +55,7 @@ public class NotificationTests
     public async Task AResolutionChangeTriggersExactlyOneNotification(TicketStoreProvider store)
     {
         using var api = new TicketApiFactory(store);
-        var client = api.CreateClient();
+        var client = await api.CreateAdminClientAsync();
         var ticket = SeededTickets.Load()[0];
 
         var response = await client.PutAsJsonAsync(
@@ -71,7 +72,7 @@ public class NotificationTests
     public async Task SavingWithNoActualChangeTriggersNoNotification(TicketStoreProvider store)
     {
         using var api = new TicketApiFactory(store);
-        var client = api.CreateClient();
+        var client = await api.CreateAdminClientAsync();
         var ticket = SeededTickets.Load()[0];
 
         var response = await client.PutAsJsonAsync(

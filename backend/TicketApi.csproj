@@ -9,9 +9,11 @@
     <!-- Run on a newer shared runtime (e.g. .NET 10) when the 8.0 runtime
          isn't installed. Prefers an exact 8.0 runtime when present. -->
     <RollForward>Major</RollForward>
+    <UserSecretsId>1d952414-3764-4296-909f-acbe317242c9</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.31" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.31">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>

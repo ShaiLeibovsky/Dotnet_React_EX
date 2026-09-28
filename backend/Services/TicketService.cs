@@ -61,6 +61,7 @@ public sealed class TicketService : ITicketService
     public async Task<TicketDto?> UpdateAsync(
         string id,
         UpdateTicketRequest request,
+        string? handlingAdminEmail,
         CancellationToken ct = default
     )
     {
@@ -88,9 +89,14 @@ public sealed class TicketService : ITicketService
             return null;
 
         if (updated.Status != previousStatus)
-            await _notifier.SendStatusChangedAsync(updated, previousStatus, ct);
+            await _notifier.SendStatusChangedAsync(
+                updated,
+                previousStatus,
+                handlingAdminEmail,
+                ct
+            );
         if (updated.Resolution != previousResolution)
-            await _notifier.SendResolutionChangedAsync(updated, ct);
+            await _notifier.SendResolutionChangedAsync(updated, handlingAdminEmail, ct);
 
         return updated.ToDto();
     }

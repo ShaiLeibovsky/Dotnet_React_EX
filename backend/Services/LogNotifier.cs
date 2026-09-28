@@ -27,6 +27,7 @@ public sealed class LogNotifier : ICustomerNotifier
     public Task SendStatusChangedAsync(
         Ticket ticket,
         string previousStatus,
+        string? handlingAdminEmail,
         CancellationToken ct = default
     )
     {
@@ -34,22 +35,34 @@ public sealed class LogNotifier : ICustomerNotifier
             CustomerNotification.StatusChanged(
                 ticket,
                 previousStatus,
-                _options.TrackingLinkFor(ticket)
+                _options.TrackingLinkFor(ticket),
+                handlingAdminEmail
             )
         );
         return Task.CompletedTask;
     }
 
-    public Task SendResolutionChangedAsync(Ticket ticket, CancellationToken ct = default)
+    public Task SendResolutionChangedAsync(
+        Ticket ticket,
+        string? handlingAdminEmail,
+        CancellationToken ct = default
+    )
     {
-        Log(CustomerNotification.ResolutionChanged(ticket, _options.TrackingLinkFor(ticket)));
+        Log(
+            CustomerNotification.ResolutionChanged(
+                ticket,
+                _options.TrackingLinkFor(ticket),
+                handlingAdminEmail
+            )
+        );
         return Task.CompletedTask;
     }
 
     private void Log(CustomerNotification notification) =>
         _logger.LogInformation(
-            "[NOTIFICATION] To: {Email} | Subject: {Subject}\n{Body}",
+            "[NOTIFICATION] To: {Email} | Reply-To: {ReplyTo} | Subject: {Subject}\n{Body}",
             notification.Recipient,
+            notification.ReplyTo,
             notification.Subject,
             notification.Body
         );

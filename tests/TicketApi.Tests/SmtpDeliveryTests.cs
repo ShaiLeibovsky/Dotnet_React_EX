@@ -60,7 +60,7 @@ public class SmtpDeliveryTests
     {
         using var smtp = new FakeSmtpServer();
         using var api = SmtpConfiguredApi(smtp);
-        var client = api.CreateClient();
+        var client = await api.CreateAdminClientAsync();
         var ticket = SeededTickets.Load()[0];
 
         var statusChange = await client.PutAsJsonAsync(
@@ -121,6 +121,47 @@ public class SmtpDeliveryTests
 
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         }
+    }
+
+    [Fact]
+    public async Task AnEditIsSentFromTheServiceMailboxAndRepliesToTheHandlingAdmin()
+    {
+        using var smtp = new FakeSmtpServer();
+        using var api = SmtpConfiguredApi(smtp);
+        var client = await api.CreateAdminClientAsync();
+        var ticket = SeededTickets.Load()[0];
+
+        var response = await client.PutAsJsonAsync(
+            $"/api/tickets/{ticket.Id}",
+            new { status = "In Progress", resolution = ticket.Resolution }
+        );
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var message = Assert.Single(await DeliveredMessagesAsync(smtp, expected: 1));
+        Assert.Contains("From: support@example.com", message);
+        Assert.Contains($"Reply-To: {TicketApiFactory.AdminEmail}", message);
+    }
+
+    [Fact]
+    public async Task ACreatedTicketCarriesNoReplyToBecauseNoAdminHandledIt()
+    {
+        using var smtp = new FakeSmtpServer();
+        using var api = SmtpConfiguredApi(smtp);
+        var client = api.CreateClient();
+
+        var response = await client.PostAsJsonAsync(
+            "/api/tickets",
+            new
+            {
+                name = "Grace Hopper",
+                email = "grace@example.com",
+                description = "A moth is lodged in relay seventy.",
+            }
+        );
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var message = Assert.Single(await DeliveredMessagesAsync(smtp, expected: 1));
+        Assert.DoesNotContain("Reply-To:", message);
     }
 
     private static int ClosedLoopbackPort()

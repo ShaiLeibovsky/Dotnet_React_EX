@@ -1,39 +1,29 @@
-// Lightweight client auth for the Admin-login POC.
-// Only logged-in admins may respond to / edit tickets; anyone may create/view.
-// Replace the fake login with a real /api/auth/login + JWT call later.
 import { createContext, useContext, useState, type ReactNode } from 'react'
-
-export interface AuthUser {
-    email: string
-    token: string
-}
+import { loginRequest } from '@/api/loginRequest'
+import { session } from '@/lib/session'
+import type { AdminSession } from '@/types/session'
 
 interface AuthContextValue {
-    user: AuthUser | null
+    user: AdminSession | null
     isAdmin: boolean
-    login: (email: string, password: string) => Promise<AuthUser>
+    login: (email: string, password: string) => Promise<AdminSession>
     logout: () => void
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-    const [user, setUser] = useState<AuthUser | null>(() => {
-        const raw = localStorage.getItem('auth_user')
-        return raw ? (JSON.parse(raw) as AuthUser) : null
-    })
+    const [user, setUser] = useState<AdminSession | null>(session.read)
 
-    async function login(email: string, password: string): Promise<AuthUser> {
-        // TODO: POST /api/auth/login -> { token } and store JWT.
-        if (!email || !password) throw new Error('Email and password required')
-        const u: AuthUser = { email, token: 'demo-token' }
-        localStorage.setItem('auth_user', JSON.stringify(u))
-        setUser(u)
-        return u
+    async function login(email: string, password: string): Promise<AdminSession> {
+        const admin = await loginRequest(email, password)
+        session.save(admin)
+        setUser(admin)
+        return admin
     }
 
     function logout(): void {
-        localStorage.removeItem('auth_user')
+        session.clear()
         setUser(null)
     }
 
