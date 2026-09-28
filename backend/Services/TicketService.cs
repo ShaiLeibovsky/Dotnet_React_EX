@@ -8,20 +8,17 @@ public sealed class TicketService : ITicketService
 {
     private readonly ITicketStore _store;
     private readonly ICustomerNotifier _notifier;
-    private readonly ISummaryService _summaries;
-    private readonly ILogger<TicketService> _logger;
+    private readonly SummaryQueue _summaryQueue;
 
     public TicketService(
         ITicketStore store,
         ICustomerNotifier notifier,
-        ISummaryService summaries,
-        ILogger<TicketService> logger
+        SummaryQueue summaryQueue
     )
     {
         _store = store;
         _notifier = notifier;
-        _summaries = summaries;
-        _logger = logger;
+        _summaryQueue = summaryQueue;
     }
 
     public async Task<IReadOnlyList<TicketDto>> GetAllAsync(CancellationToken ct = default)
@@ -44,14 +41,11 @@ public sealed class TicketService : ITicketService
         Validate(request);
 
         var now = DateTime.UtcNow;
-        var description = request.Description.Trim();
-        var summary = await SummariseOrEmptyAsync(description, ct);
         var ticket = new Ticket
         {
             Name = request.Name.Trim(),
             Email = request.Email.Trim(),
-            Description = description,
-            Summary = summary,
+            Description = request.Description.Trim(),
             Status = TicketStatuses.New,
             CreatedAt = now,
             UpdatedAt = now,
@@ -59,6 +53,7 @@ public sealed class TicketService : ITicketService
 
         var created = await _store.CreateAsync(ticket, ct);
         await _notifier.SendTicketCreatedAsync(created, ct);
+        _summaryQueue.Enqueue(created.Id);
         return created.ToDto();
     }
 
@@ -103,26 +98,6 @@ public sealed class TicketService : ITicketService
             await _notifier.SendResolutionChangedAsync(updated, handlingAdminEmail, ct);
 
         return updated.ToDto();
-    }
-
-    private async Task<string> SummariseOrEmptyAsync(string description, CancellationToken ct)
-    {
-        try
-        {
-            return await _summaries.SummariseAsync(description, ct);
-        }
-        catch (OperationCanceledException) when (ct.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception failure)
-        {
-            _logger.LogWarning(
-                failure,
-                "Summary generation failed; creating the ticket without a summary."
-            );
-            return string.Empty;
-        }
     }
 
     // --- validation ---

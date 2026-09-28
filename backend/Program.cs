@@ -104,6 +104,10 @@ else
         });
 }
 
+// ADR-0003 section 5, summarising after the response.
+builder.Services.AddSingleton<SummaryQueue>();
+builder.Services.AddHostedService<SummaryBackfill>();
+
 builder.Services.AddSingleton<IPasswordHasher<AdminUser>, PasswordHasher<AdminUser>>();
 builder.Services.AddScoped<AdminAuthService>();
 builder.Services.AddScoped<ITicketService, TicketService>();

@@ -16,8 +16,9 @@ already written the description. A summary is a triage convenience for support.
 
 ## Decision
 
-`ISummaryService` is asked for a summary during `TicketService.CreateAsync`, and the
-result is persisted with the ticket. `GeminiSummaryService` calls the Gemini
+`ISummaryService` is asked for a summary after `POST /api/tickets` has answered, and
+the result is written back to the stored ticket — section 5. `GeminiSummaryService`
+calls the Gemini
 `generateContent` endpoint through an `HttpClient` supplied by `IHttpClientFactory`
 (`AddHttpClient<ISummaryService, GeminiSummaryService>`), which owns the key header,
 base address and timeout. The key comes from `Summary:ApiKey`, set through
@@ -28,9 +29,10 @@ user-secrets.
 The summary's value to the customer is zero: they never see it, and the description
 they wrote is stored regardless. A provider outage, a rate limit or a timeout would
 otherwise turn a working ticket form into a broken one for a field nobody asked for.
-`TicketService` catches every exception from the summary call, logs a warning, and
-creates the ticket with an empty summary — the same state every ticket had before
-this feature. The tests assert exactly that: a throwing provider still yields a 201.
+`SummaryBackfill` catches every exception from the summary call, logs a warning, and
+leaves the ticket with the empty summary it was created with — the same state every
+ticket had before this feature. The tests assert exactly that: a throwing provider
+still yields a 201 and a blank summary.
 
 "Fails" includes returning something unusable: a response without the expected
 `candidates` shape throws while being read, and an answer longer than twice
@@ -41,9 +43,9 @@ The cost of this choice is that a silently misconfigured key looks like a workin
 application with no summaries. The warning log is the only signal, which is the
 right trade for a bonus feature but would not be for a required one.
 
-Cancellation is the one exception that is not swallowed: if the client disconnects
-mid-create, `OperationCanceledException` is rethrown rather than logged as a
-provider failure.
+Cancellation is the one exception that is not swallowed: on host shutdown,
+`OperationCanceledException` is rethrown rather than logged as a provider failure, so
+the worker stops instead of draining the queue against a closing application.
 
 ### 2. Why a null implementation rather than a feature flag
 
@@ -59,7 +61,10 @@ The key's presence *is* the flag, so a separate `Summary:Enabled` would be a sec
 switch that can disagree with the first — configured key, feature off, no
 explanation. Registering by key presence makes that state unrepresentable.
 
-### 3. Why the summary is generated inline rather than in the background
+### 3. Why the summary is generated inline rather than in the background (superseded)
+
+Superseded by section 5. The latency this section called acceptable stopped being
+acceptable once a retried provider could hold the create open for 25 seconds.
 
 Inline is one call in a method that already awaits a store write and an email. A
 background job would need a queue, a worker, and a way for the frontend to learn the
@@ -77,19 +82,41 @@ than a hand-rolled loop.
 The two timeouts split what `Summary:TimeoutSeconds` used to mean alone.
 `Summary:AttemptTimeoutSeconds` (10s) bounds one call to Gemini, which is the number
 that tracks how slow the provider is — observed responses run 5-7s.
-`Summary:TimeoutSeconds` (25s) bounds the retries together, and is the real worst case
-a customer waits for `POST /api/tickets`. It is the number to lower if create latency
-matters more than a summary surviving a transient outage.
+`Summary:TimeoutSeconds` (25s) bounds the retries together. Since section 5 it is
+spent by the backfill rather than by the customer's request.
 
 `HttpClient.Timeout` is set to infinite because it would otherwise cancel the whole
 pipeline mid-retry, and its budget cannot be expressed per attempt. The resilience
 handler owns cancellation instead. `CircuitBreaker.SamplingDuration` is pinned to twice
 the attempt timeout because the library rejects a sampling window shorter than that.
 
+### 5. Summarising after the response
+
+`POST /api/tickets` no longer waits for a summary. It stores the ticket, notifies the
+customer, puts the ticket id on `SummaryQueue`, and answers. `SummaryBackfill`, a
+`BackgroundService`, drains that queue, asks `ISummaryService`, and writes the summary
+back through `ITicketStore.UpdateAsync`. A ticket whose summary fails keeps the empty
+one it was created with, so the failure handling of section 1 is unchanged — only its
+location moved.
+
+The queue holds ids rather than descriptions so the backfill reads the ticket it is
+about to update, and there is no second copy of the description to go stale.
+
+The queue is in-memory and unbounded. Unbounded is safe because exactly one id is
+enqueued per created ticket, by the request that created it. In-memory means a restart
+loses every id still waiting, and those tickets keep an empty summary forever — there
+is no sweep for them. That is the deliberate ceiling: a durable queue would need a
+table, a claim protocol and a retry count, for a field that is already optional.
+
 ## Consequences
 
-- `POST /api/tickets` is as slow as the provider, up to `Summary:TimeoutSeconds`, and a
-  retried 503 spends most of that budget before the ticket is created.
+- `POST /api/tickets` returns at store-and-notify speed. Every ticket is created with
+  an empty summary, and the summary appears on a later read, typically seconds later.
+  A client that renders the create response alone will never show a summary.
+- A summary arriving bumps the ticket's `UpdatedAt`, because `ITicketStore.UpdateAsync`
+  timestamps every write. To a reader, a ticket nobody touched looks recently updated.
+- A restart drops queued ids, so tickets created moments before it keep an empty
+  summary permanently.
 - Summaries are generated once, on create. Editing a description is not possible
   through the API, so there is no staleness to handle yet; a description edit would
   need to re-summarise.

@@ -22,7 +22,8 @@ backend/
     ITicketService / TicketService     validation + orchestration + mapping
     ICustomerNotifier / LogNotifier    notification channel that only logs (the default)
     ICustomerNotifier / EmailNotifier  notification channel over SMTP, when configured
-    ISummaryService / GeminiSummaryService  AI summary on create (Null impl with no key)
+    ISummaryService / GeminiSummaryService  AI summary (Null impl with no key)
+    SummaryQueue / SummaryBackfill     hosted worker that summarises after the response
   Data/                 TicketDbContext, migrations, startup migrate + seed
   Endpoints/TicketEndpoints.cs         /api/tickets route group
 ```
@@ -94,14 +95,15 @@ reviewer-facing setup.
 
 ## AI summary
 
-On create, `ISummaryService` is asked for a one-sentence summary of the description,
-stored on the ticket and shown in the ticket table and detail view. With no API key
-configured, `NullSummaryService` is registered and tickets are created with no
-summary — a fresh clone runs correctly with no credentials. Generation is
-best-effort: a provider failure — or an answer too long to be a summary — is logged
-and the ticket is still created. A transient failure such as the `503` the free tier
-returns under load is retried first — ADR-0003 section 4, retrying an overloaded
-provider.
+Tickets are created with no summary and answered immediately. `SummaryBackfill` then
+asks `ISummaryService` for a one-sentence summary of the description and writes it
+back, so it appears on a later read and is shown in the ticket table and detail view
+— ADR-0003 section 5, summarising after the response. With no API key configured,
+`NullSummaryService` is registered and every ticket simply keeps its blank summary — a
+fresh clone runs correctly with no credentials. Generation is best-effort: a provider
+failure — or an answer too long to be a summary — is logged and the ticket keeps the
+blank summary. A transient failure such as the `503` the free tier returns under load
+is retried first — ADR-0003 section 4, retrying an overloaded provider.
 
 Supply your own [Gemini API key](https://aistudio.google.com/apikey) through
 user-secrets, so it is never committed:
@@ -113,6 +115,5 @@ dotnet run
 ```
 
 `Summary:Model`, `Summary:TimeoutSeconds`, `Summary:AttemptTimeoutSeconds` and
-`Summary:MaxWords` are in
-`appsettings.json`. To turn the feature off again, `dotnet user-secrets remove "Summary:ApiKey"`.
+`Summary:MaxWords` are in `appsettings.json`. To turn the feature off again, `dotnet user-secrets remove "Summary:ApiKey"`.
 

@@ -15,14 +15,12 @@ public class SummaryTests
 
     [Theory]
     [EveryTicketStore]
-    public async Task AProviderFailureStillCreatesTheTicketWithNoSummary(
-        TicketStoreProvider store
-    )
+    public async Task AProviderFailureLeavesTheTicketWithNoSummary(TicketStoreProvider store)
     {
-        using var api = new TicketApiFactory(
-            store,
-            new StubSummaryService(_ => throw new HttpRequestException("provider unavailable"))
+        var gemini = new StubSummaryService(
+            _ => throw new HttpRequestException("provider unavailable")
         );
+        using var api = new TicketApiFactory(store, gemini);
         var client = api.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/tickets", Payload);
@@ -30,29 +28,27 @@ public class SummaryTests
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var created = await response.Content.ReadFromJsonAsync<TicketDto>();
         Assert.NotNull(created);
-        Assert.Equal(string.Empty, created.Summary);
+        Assert.Equal(string.Empty, await SummaryAfterBackfillAsync(client, gemini.Called, created.Id));
     }
 
     [Theory]
     [EveryTicketStore]
-    public async Task AGeneratedSummaryIsPersistedAndReturnedOnALaterRead(
+    public async Task AGeneratedSummaryReachesTheTicketAfterItIsCreated(
         TicketStoreProvider store
     )
     {
-        using var api = new TicketApiFactory(
-            store,
-            new StubSummaryService(description => $"Summary of: {description}")
-        );
+        var gemini = new StubSummaryService(description => $"Summary of: {description}");
+        using var api = new TicketApiFactory(store, gemini);
         var client = api.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/tickets", Payload);
         var created = await response.Content.ReadFromJsonAsync<TicketDto>();
 
-        var expected = "Summary of: The analytical engine jams on every third card.";
-        Assert.Equal(expected, created!.Summary);
-
-        var reread = await client.GetFromJsonAsync<TicketDto>($"/api/tickets/{created.Id}");
-        Assert.Equal(expected, reread!.Summary);
+        Assert.Equal(string.Empty, created!.Summary);
+        Assert.Equal(
+            "Summary of: The analytical engine jams on every third card.",
+            await SummaryAfterBackfillAsync(client, gemini.Called, created.Id)
+        );
     }
 
     [Fact]
@@ -66,15 +62,15 @@ public class SummaryTests
         var created = await response.Content.ReadFromJsonAsync<TicketDto>();
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        Assert.Equal("The engine jams.", created!.Summary);
+        Assert.Equal(
+            "The engine jams.",
+            await SummaryAfterBackfillAsync(client, gemini.Called, created!.Id)
+        );
         Assert.Equal(
             "https://generativelanguage.googleapis.com/v1beta/models/"
                 + "gemini-3.1-flash-lite:generateContent",
             gemini.LastRequestUri?.ToString()
         );
-
-        var reread = await client.GetFromJsonAsync<TicketDto>($"/api/tickets/{created.Id}");
-        Assert.Equal("The engine jams.", reread!.Summary);
     }
 
     [Fact]
@@ -86,10 +82,13 @@ public class SummaryTests
         var client = api.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/tickets", Payload);
+        var created = await response.Content.ReadFromJsonAsync<TicketDto>();
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        var created = await response.Content.ReadFromJsonAsync<TicketDto>();
-        Assert.Equal(string.Empty, created!.Summary);
+        Assert.Equal(
+            string.Empty,
+            await SummaryAfterBackfillAsync(client, gemini.Called, created!.Id)
+        );
     }
 
     [Fact]
@@ -100,10 +99,13 @@ public class SummaryTests
         var client = api.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/tickets", Payload);
+        var created = await response.Content.ReadFromJsonAsync<TicketDto>();
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        var created = await response.Content.ReadFromJsonAsync<TicketDto>();
-        Assert.Equal(string.Empty, created!.Summary);
+        Assert.Equal(
+            string.Empty,
+            await SummaryAfterBackfillAsync(client, gemini.Called, created!.Id)
+        );
     }
 
     [Fact]
@@ -114,20 +116,14 @@ public class SummaryTests
         var client = api.CreateClient();
 
         var response = await client.PostAsJsonAsync("/api/tickets", Payload);
+        var created = await response.Content.ReadFromJsonAsync<TicketDto>();
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        var created = await response.Content.ReadFromJsonAsync<TicketDto>();
-        Assert.Equal(string.Empty, created!.Summary);
+        Assert.Equal(
+            string.Empty,
+            await SummaryAfterBackfillAsync(client, gemini.Called, created!.Id)
+        );
     }
-
-    private static string GeminiResponse(string text) =>
-        $$"""
-        {
-          "candidates": [
-            { "content": { "parts": [ { "text": "  {{text}}  " } ], "role": "model" } }
-          ]
-        }
-        """;
 
     [Theory]
     [EveryTicketStore]
@@ -144,4 +140,38 @@ public class SummaryTests
         var created = await response.Content.ReadFromJsonAsync<TicketDto>();
         Assert.Equal(string.Empty, created!.Summary);
     }
+
+    /// <summary>
+    /// Waits for the provider call the backfill makes, then for the write that may follow
+    /// it, and returns whatever summary the ticket ended up with.
+    /// </summary>
+    private static async Task<string> SummaryAfterBackfillAsync(
+        HttpClient client,
+        Task providerCalled,
+        string ticketId
+    )
+    {
+        await providerCalled.WaitAsync(TimeSpan.FromSeconds(10));
+
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(1);
+        while (DateTime.UtcNow < deadline)
+        {
+            var ticket = await client.GetFromJsonAsync<TicketDto>($"/api/tickets/{ticketId}");
+            if (!string.IsNullOrEmpty(ticket!.Summary))
+                return ticket.Summary;
+            await Task.Delay(20);
+        }
+
+        var settled = await client.GetFromJsonAsync<TicketDto>($"/api/tickets/{ticketId}");
+        return settled!.Summary;
+    }
+
+    private static string GeminiResponse(string text) =>
+        $$"""
+        {
+          "candidates": [
+            { "content": { "parts": [ { "text": "  {{text}}  " } ], "role": "model" } }
+          ]
+        }
+        """;
 }
