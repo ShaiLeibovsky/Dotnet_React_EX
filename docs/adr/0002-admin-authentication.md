@@ -67,14 +67,21 @@ deployment with real staff accounts should move to `httpOnly` cookies.
 ASP.NET Core shared framework — provides the salted PBKDF2 hash, so no third-party
 hashing package and no hand-rolled salt handling. One admin account is seeded at
 startup from `Auth:AdminEmail` and `Auth:AdminPassword`, inserted only when that email
-is absent, so no hash is committed or baked into a migration. The signing key and the
-seeded password come from .NET user-secrets:
+is absent, so no hash is committed or baked into a migration. The whole `Auth` section
+comes from .NET user-secrets, with nothing in `appsettings.json` to fall back on:
 
 ```
 cd backend
 dotnet user-secrets set "Auth:SigningKey" "$(openssl rand -base64 48)"
+dotnet user-secrets set "Auth:AdminEmail" "<a mailbox you read>"
 dotnet user-secrets set "Auth:AdminPassword" "<your password>"
 ```
+
+The email is not secret and a committed default would spare one command, but since
+section 6 sends it to customers as a `Reply-To` a default is worse than nothing: a
+deployment that sets the password and forgets the email would otherwise seed an account
+whose replies bounce. With the section absent, a half-configured deployment seeds no
+account and says so in the log.
 
 ### 6. The handling admin is a Reply-To, not the sender
 
@@ -86,8 +93,8 @@ who touched the ticket; the credential stays one service account.
 Sending *as* the admin was the alternative and was rejected on two counts. Providers
 generally require the `From` to match the authenticated account, and a `From` on a
 domain the sending mailbox cannot sign fails SPF and DKIM alignment, so the mail is
-rejected or filtered — `Auth:AdminEmail` defaults to `admin@supporthub.local`, which is
-not a deliverable address at all. Per-admin sending would also mean a per-admin SMTP
+rejected or filtered, and `Auth:AdminEmail` is whatever mailbox the operator configured
+rather than an address on the sending domain. Per-admin sending would also mean a per-admin SMTP
 credential; keeping those in the `Admins` row would put a recoverable secret in the
 ticket database, next to the data it is least related to, where a leaked file becomes a
 mailbox takeover rather than a disclosure of tickets.
@@ -96,11 +103,29 @@ The creation notification has no admin — `POST /api/tickets` is anonymous (ADR
 section 1 grants edit alone) — so `handlingAdminEmail` is nullable and no `Reply-To` is
 set on that path.
 
+### 7. The generated development signing key
+
+With no `Auth:SigningKey` configured, the API generates 48 random bytes once and keeps
+them in a gitignored `*.signing-key` file beside the SQLite database, owner-readable
+only, reused on every later start. A fresh clone runs with no secret configured and a
+token keeps working across restarts.
+
+Generating a key per process was the previous behaviour and cost a login on every
+restart, for a value nobody chooses — unlike the admin email and password, a signing key
+has no right answer a human should be asked for. Persisting it to a file rather than to
+user-secrets keeps the app from writing into the developer's secret store, and rather
+than to the database keeps the credential out of the file holding the data it protects.
+
+A configured `Auth:SigningKey` still wins, so a deployment sets one through the
+environment and never touches the file. The generated path logs a warning naming itself,
+because a deployment that reaches it is sharing a key with whatever else can read that
+directory, and loses every session if the file is lost.
+
 ## Consequences
 
-- With no `Auth:SigningKey` configured, startup generates a random key so a fresh
-  clone still runs; tokens then stop validating on every restart. Marked
-  `ponytail:` in `Program.cs`.
+- Two processes starting at once against the same empty directory can each generate a
+  key and the later write wins, invalidating the earlier process's tokens. A dev-only
+  path with one process, so it is left unguarded.
 - The SQLite file is now created and migrated on every run, including with the JSON
   ticket store selected. It stays gitignored.
 - A rejected token is handled in one place: the request helper clears the stored

@@ -1,7 +1,8 @@
 namespace TicketApi.Services;
 
-/// <summary>Bound from the "Auth" config section. The signing key and the seeded
-/// admin password come from user-secrets, never from a committed file.</summary>
+/// <summary>Bound from the "Auth" config section, never from a committed file: the seeded
+/// admin's email and password come from user-secrets, and the signing key from there or,
+/// unset, from <see cref="DevelopmentSigningKey"/>.</summary>
 public class AuthOptions
 {
     public const string SectionName = "Auth";

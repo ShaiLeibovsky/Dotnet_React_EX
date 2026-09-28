@@ -17,18 +17,22 @@ You may also use **AI tools** (such as ChatGPT or Gemini) — **as long as you c
 
 ## 🔑 Local setup
 
-The admin account and the token signing key come from .NET user-secrets, so no
-credential material is committed:
+The admin account comes from .NET user-secrets, so no credential material is committed:
 
 ```bash
 cd backend
-dotnet user-secrets set "Auth:SigningKey" "$(openssl rand -base64 48)"
+dotnet user-secrets set "Auth:AdminEmail" "<a mailbox you read>"
 dotnet user-secrets set "Auth:AdminPassword" "<choose one>"
 ```
 
-The admin email is `Auth:AdminEmail` in `appsettings.json`. The account is created on
-first run. Without a signing key the API still starts with a random one, and tokens
-stop working on every restart. See [ADR-0002](docs/adr/0002-admin-authentication.md).
+The account is created on first run, and only when both the email and the password are
+set. That email also reaches customers as the `Reply-To` on tickets this admin edits, so
+point it at a real mailbox.
+
+The token signing key needs no setup: with no `Auth:SigningKey` configured the API
+generates one and keeps it in a gitignored file beside the database, so tokens survive a
+restart. A deployment sets `Auth:SigningKey` from the environment and that wins. See
+[ADR-0002](docs/adr/0002-admin-authentication.md).
 
 ---
 
