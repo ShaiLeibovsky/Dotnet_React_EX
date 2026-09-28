@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.IdentityModel.Tokens;
 using TicketApi.Data;
 using TicketApi.Endpoints;
@@ -80,12 +81,26 @@ if (string.IsNullOrWhiteSpace(summaryOptions.ApiKey))
 }
 else
 {
+    // ADR-0003 section 4, retrying an overloaded provider.
     builder
         .Services.AddHttpClient<ISummaryService, GeminiSummaryService>(client =>
         {
             client.BaseAddress = new Uri(GeminiSummaryService.BaseAddress);
-            client.Timeout = TimeSpan.FromSeconds(summaryOptions.TimeoutSeconds);
+            client.Timeout = Timeout.InfiniteTimeSpan;
             client.DefaultRequestHeaders.Add("x-goog-api-key", summaryOptions.ApiKey);
+        })
+        .AddStandardResilienceHandler()
+        .Configure(resilience =>
+        {
+            resilience.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(
+                summaryOptions.TimeoutSeconds
+            );
+            resilience.AttemptTimeout.Timeout = TimeSpan.FromSeconds(
+                summaryOptions.AttemptTimeoutSeconds
+            );
+            resilience.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(
+                summaryOptions.AttemptTimeoutSeconds * 2
+            );
         });
 }
 

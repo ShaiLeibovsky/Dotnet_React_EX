@@ -64,12 +64,32 @@ explanation. Registering by key presence makes that state unrepresentable.
 Inline is one call in a method that already awaits a store write and an email. A
 background job would need a queue, a worker, and a way for the frontend to learn the
 summary arrived — for a field the UI already treats as optional. The timeout
-(`Summary:TimeoutSeconds`, default 10s) bounds the cost to create. If that latency
+(`Summary:TimeoutSeconds`, default 25s) bounds the cost to create. If that latency
 ever matters, the seam to move behind is `ISummaryService`, unchanged.
+
+### 4. Retrying an overloaded provider
+
+The free tier sheds load with `503 Service Unavailable`, and the first key used against
+this code hit it on consecutive ticket creates. A 503 is retryable, so the client gets
+`AddStandardResilienceHandler`: retry, circuit breaker and the two timeouts, rather
+than a hand-rolled loop.
+
+The two timeouts split what `Summary:TimeoutSeconds` used to mean alone.
+`Summary:AttemptTimeoutSeconds` (10s) bounds one call to Gemini, which is the number
+that tracks how slow the provider is — observed responses run 5-7s.
+`Summary:TimeoutSeconds` (25s) bounds the retries together, and is the real worst case
+a customer waits for `POST /api/tickets`. It is the number to lower if create latency
+matters more than a summary surviving a transient outage.
+
+`HttpClient.Timeout` is set to infinite because it would otherwise cancel the whole
+pipeline mid-retry, and its budget cannot be expressed per attempt. The resilience
+handler owns cancellation instead. `CircuitBreaker.SamplingDuration` is pinned to twice
+the attempt timeout because the library rejects a sampling window shorter than that.
 
 ## Consequences
 
-- `POST /api/tickets` is as slow as the provider, up to the configured timeout.
+- `POST /api/tickets` is as slow as the provider, up to `Summary:TimeoutSeconds`, and a
+  retried 503 spends most of that budget before the ticket is created.
 - Summaries are generated once, on create. Editing a description is not possible
   through the API, so there is no staleness to handle yet; a description edit would
   need to re-summarise.

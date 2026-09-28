@@ -99,7 +99,9 @@ stored on the ticket and shown in the ticket table and detail view. With no API 
 configured, `NullSummaryService` is registered and tickets are created with no
 summary — a fresh clone runs correctly with no credentials. Generation is
 best-effort: a provider failure — or an answer too long to be a summary — is logged
-and the ticket is still created.
+and the ticket is still created. A transient failure such as the `503` the free tier
+returns under load is retried first — ADR-0003 section 4, retrying an overloaded
+provider.
 
 Supply your own [Gemini API key](https://aistudio.google.com/apikey) through
 user-secrets, so it is never committed:
@@ -110,6 +112,7 @@ dotnet user-secrets set "Summary:ApiKey" "<your-gemini-api-key>"
 dotnet run
 ```
 
-`Summary:Model`, `Summary:TimeoutSeconds` and `Summary:MaxWords` are in
+`Summary:Model`, `Summary:TimeoutSeconds`, `Summary:AttemptTimeoutSeconds` and
+`Summary:MaxWords` are in
 `appsettings.json`. To turn the feature off again, `dotnet user-secrets remove "Summary:ApiKey"`.
 
