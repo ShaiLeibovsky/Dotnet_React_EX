@@ -7,17 +7,17 @@ namespace TicketApi.Services;
 public sealed class TicketService : ITicketService
 {
     private readonly ITicketStore _store;
-    private readonly IEmailService _email;
+    private readonly ICustomerNotifier _notifier;
     private readonly ILogger<TicketService> _logger;
 
     public TicketService(
         ITicketStore store,
-        IEmailService email,
+        ICustomerNotifier notifier,
         ILogger<TicketService> logger
     )
     {
         _store = store;
-        _email = email;
+        _notifier = notifier;
         _logger = logger;
     }
 
@@ -54,7 +54,7 @@ public sealed class TicketService : ITicketService
         // BONUS: generate ticket.Summary via an AI service on feature/ai-summary.
 
         var created = await _store.CreateAsync(ticket, ct);
-        await _email.SendTicketCreatedAsync(created, ct);
+        await _notifier.SendTicketCreatedAsync(created, ct);
         return created.ToDto();
     }
 
@@ -88,9 +88,9 @@ public sealed class TicketService : ITicketService
             return null;
 
         if (updated.Status != previousStatus)
-            await _email.SendStatusChangedAsync(updated, previousStatus, ct);
+            await _notifier.SendStatusChangedAsync(updated, previousStatus, ct);
         if (updated.Resolution != previousResolution)
-            await _email.SendResolutionChangedAsync(updated, ct);
+            await _notifier.SendResolutionChangedAsync(updated, ct);
 
         return updated.ToDto();
     }

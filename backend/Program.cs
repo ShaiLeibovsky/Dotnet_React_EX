@@ -43,7 +43,15 @@ else
     builder.Services.AddSingleton<ITicketStore, JsonTicketStore>();
 }
 
-builder.Services.AddSingleton<IEmailService, ConsoleEmailService>();
+var emailOptions =
+    builder.Configuration.GetSection(EmailOptions.SectionName).Get<EmailOptions>()
+    ?? new EmailOptions();
+
+if (emailOptions.SmtpConfigured)
+    builder.Services.AddSingleton<ICustomerNotifier, EmailNotifier>();
+else
+    builder.Services.AddSingleton<ICustomerNotifier, LogNotifier>();
+
 builder.Services.AddScoped<ITicketService, TicketService>();
 
 // Allow the Vite dev origin so the frontend can call the API directly.
@@ -58,6 +66,11 @@ var app = builder.Build();
 
 if (storeIsSqlite)
     await TicketDatabase.MigrateAndSeedAsync(app.Services);
+
+app.Logger.LogInformation(
+    "Customer notifications are delivered by {Notifier}.",
+    app.Services.GetRequiredService<ICustomerNotifier>().GetType().Name
+);
 
 // Map ValidationException to a 400 ValidationProblem; everything else to 500.
 app.UseExceptionHandler(handler =>

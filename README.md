@@ -96,6 +96,32 @@ Simulate sending an email to the customer in the following cases:
 2. Whenever the **status** changes  
 3. Whenever the **resolution text** changes  
 
+### Supplying your own SMTP credentials
+
+Out of the box the backend logs each notification to the console, so the app runs with no
+mail provider configured. Supply SMTP credentials through .NET user-secrets and the same
+three notifications are delivered by email instead — nothing is committed to the repo:
+
+```bash
+cd backend
+dotnet user-secrets set "Email:SmtpHost" "smtp.gmail.com"
+dotnet user-secrets set "Email:SmtpUser" "you@gmail.com"
+dotnet user-secrets set "Email:SmtpPassword" "your-16-char-app-password"
+```
+
+All three keys must be present; with any of them missing, console logging stays in place. The
+backend logs which of the two it chose on startup. User-secrets are only read in the
+`Development` environment, which is what `dotnet run` uses; elsewhere supply the same keys as
+environment variables (`Email__SmtpHost`, `Email__SmtpUser`, `Email__SmtpPassword`).
+Optional keys: `Email:SmtpPort` (default `587`), `Email:SmtpFrom` (defaults to `SmtpUser`),
+`Email:SmtpUseStartTls` (default `true`), and `Email:TrackingBaseUrl` for the link in the
+ticket-created message.
+
+Gmail needs an [app password](https://support.google.com/accounts/answer/185833), not your
+account password. Delivery uses STARTTLS submission (port 587); implicit-TLS ports such as
+465 are not supported. A failed send is logged and never fails the API request that
+triggered it.
+
 ---
 
 ## ✅ Bonus Features Summary
