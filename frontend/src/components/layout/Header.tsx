@@ -14,7 +14,9 @@ export const Header = () => {
                 <Link to="/" className="flex items-center gap-2 font-semibold">
                     <LifeBuoy className="size-6" />
                     <span>SupportHub</span>
-                    <span className="font-normal text-neutral-400">/ tickets</span>
+                    <span className="hidden font-normal text-neutral-400 sm:inline">
+                        / tickets
+                    </span>
                 </Link>
                 <div className="flex-1" />
                 {user ? (

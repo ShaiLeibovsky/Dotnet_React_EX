@@ -16,4 +16,6 @@ export const useRevalidateUntilSummary = (ticket: Ticket) => {
         const poll = setInterval(revalidate, pollIntervalMs)
         return () => clearInterval(poll)
     }, [summaryStillExpected, revalidate])
+
+    return summaryStillExpected
 }
