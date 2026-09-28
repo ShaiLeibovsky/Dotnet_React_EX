@@ -32,7 +32,8 @@ public static class TicketEndpoints
         {
             var created = await service.CreateAsync(await NewTicketPayload.ReadAsync(http, ct), ct);
             return TypedResults.Created($"/api/tickets/{created.Id}", created);
-        });
+        })
+            .Accepts<CreateTicketRequest>("application/json", "multipart/form-data");
 
         group.MapPut("/{id}", async Task<IResult> (
             string id,

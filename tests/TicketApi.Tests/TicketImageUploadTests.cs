@@ -69,6 +69,23 @@ public class TicketImageUploadTests
     }
 
     [Fact]
+    public async Task AnUploadTooBigToEvenParseIsRejectedAndNamesTheField()
+    {
+        using var api = new TicketApiFactory();
+        var client = api.CreateClient();
+        var farOversized = new byte[TicketImageStore.MaxBytes * 2];
+        PngBytes.CopyTo(farOversized, 0);
+
+        var response = await client.PostAsync(
+            "/api/tickets",
+            NewTicket(farOversized, "enormous.png")
+        );
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains("Image", await ValidationErrors.FieldNamesAsync(response));
+    }
+
+    [Fact]
     public async Task AFileThatIsNotAnImageIsRejectedDespiteAnImageExtension()
     {
         using var api = new TicketApiFactory();

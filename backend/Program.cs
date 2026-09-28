@@ -1,10 +1,13 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.Extensions.FileProviders;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using TicketApi.Data;
 using TicketApi.Endpoints;
 using TicketApi.Services;
+
+const int FormFieldsHeadroom = 8 * 1024;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +56,9 @@ if (emailOptions.SmtpConfigured)
 else
     builder.Services.AddSingleton<ICustomerNotifier, LogNotifier>();
 
+builder.Services.Configure<FormOptions>(options =>
+    options.MultipartBodyLengthLimit = TicketImageStore.MaxBytes + FormFieldsHeadroom
+);
 builder.Services.AddSingleton<TicketImageStore>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 
@@ -79,6 +85,12 @@ app.UseExceptionHandler(handler =>
     handler.Run(async context =>
     {
         var error = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+        if (error is InvalidDataException)
+            error = ValidationException.Single(
+                "Image",
+                $"The image must be {TicketImageStore.MaxBytes / (1024 * 1024)} MB or smaller."
+            );
+
         if (error is ValidationException validation)
         {
             await Results
@@ -101,15 +113,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 
-var uploadDirectory = app.Services.GetRequiredService<TicketImageStore>().Directory;
+var uploadDirectory = Path.GetFullPath(storeOptions.UploadDirectory);
 Directory.CreateDirectory(uploadDirectory);
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(uploadDirectory),
     RequestPath = $"/{TicketImageStore.UrlPrefix}",
     ServeUnknownFileTypes = false,
-    OnPrepareResponse = served =>
-        served.Context.Response.Headers.XContentTypeOptions = "nosniff",
+    OnPrepareResponse = staticFile =>
+        staticFile.Context.Response.Headers.XContentTypeOptions = "nosniff",
 });
 
 app.MapTicketEndpoints();

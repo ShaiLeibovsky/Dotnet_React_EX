@@ -15,7 +15,7 @@ server-side (or SQLite, by configuration) and serves the React frontend in `../f
 backend/
   Program.cs            DI, CORS, JSON, exception handling, endpoint mapping
   Entities/             Ticket (+ status constant set)
-  Dtos/                 Create/Update requests, TicketDto, mapping
+  Dtos/                 Create/Update requests, NewTicketPayload, TicketDto, mapping
   Services/
     ITicketStore / JsonTicketStore     thread-safe JSON-file persistence
     ITicketStore / SqliteTicketStore   EF Core persistence, selected by configuration

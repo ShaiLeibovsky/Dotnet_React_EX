@@ -16,7 +16,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog'
 import { ApiError, createTicket } from '@/api/ticketsApi'
-import type { Ticket } from '@/types/ticket'
+import { MAX_IMAGE_BYTES, type Ticket } from '@/types/ticket'
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -24,6 +24,7 @@ interface Errors {
     name?: string
     email?: string
     description?: string
+    image?: string
 }
 
 export const NewTicketDialog = ({
@@ -53,6 +54,8 @@ export const NewTicketDialog = ({
         if (!email.trim()) e.email = 'Email is required'
         else if (!emailRe.test(email)) e.email = 'Enter a valid email'
         if (!description.trim()) e.description = 'Issue description is required'
+        if (image && image.size > MAX_IMAGE_BYTES)
+            e.image = `The image must be ${MAX_IMAGE_BYTES / (1024 * 1024)} MB or smaller`
         setErrors(e)
         return Object.keys(e).length === 0
     }
@@ -157,6 +160,9 @@ export const NewTicketDialog = ({
                                 accept="image/png,image/jpeg,image/gif,image/webp"
                                 onChange={(e) => setImage(e.target.files?.[0])}
                             />
+                            {errors.image && (
+                                <p className="text-destructive text-sm">{errors.image}</p>
+                            )}
                         </div>
                     </div>
 

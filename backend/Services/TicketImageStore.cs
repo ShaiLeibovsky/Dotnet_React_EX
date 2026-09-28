@@ -22,14 +22,12 @@ public sealed class TicketImageStore
 
     private const int WebpRiffLength = 12;
 
-    private readonly string directory;
+    private readonly string uploadDirectory;
 
     public TicketImageStore(IOptions<TicketStoreOptions> options)
     {
-        directory = Path.GetFullPath(options.Value.UploadDirectory);
+        uploadDirectory = Path.GetFullPath(options.Value.UploadDirectory);
     }
-
-    public string Directory => directory;
 
     public async Task<string> SaveAsync(IFormFile image, CancellationToken ct = default)
     {
@@ -54,9 +52,8 @@ public sealed class TicketImageStore
                 "The file must be a PNG, JPEG, GIF or WebP image."
             );
 
-        System.IO.Directory.CreateDirectory(directory);
         var fileName = $"{Guid.NewGuid()}{extension}";
-        await using var target = File.Create(Path.Combine(directory, fileName));
+        await using var target = File.Create(Path.Combine(uploadDirectory, fileName));
         await target.WriteAsync(header.AsMemory(0, headerLength), ct);
         await uploaded.CopyToAsync(target, ct);
 

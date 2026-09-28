@@ -26,11 +26,13 @@ export const TicketDetailPage = () => {
     const [status, setStatus] = useState<TicketStatus>(ticket.status)
     const [resolution, setResolution] = useState(ticket.resolution)
     const [saving, setSaving] = useState(false)
+    const [imageMissing, setImageMissing] = useState(false)
 
     if (editedTicketId !== ticket.id) {
         setEditedTicketId(ticket.id)
         setStatus(ticket.status)
         setResolution(ticket.resolution)
+        setImageMissing(false)
     }
 
     const dirty = status !== ticket.status || resolution !== ticket.resolution
@@ -89,11 +91,12 @@ export const TicketDetailPage = () => {
                             <p className="text-sm whitespace-pre-wrap">
                                 {ticket.description}
                             </p>
-                            {ticket.imageUrl && (
+                            {ticket.imageUrl && !imageMissing && (
                                 <img
                                     src={`/${ticket.imageUrl}`}
                                     alt={`Attached by ${ticket.name}`}
                                     className="max-h-96 rounded-md border"
+                                    onError={() => setImageMissing(true)}
                                 />
                             )}
                             {ticket.summary && (

@@ -16,6 +16,9 @@ export interface Ticket {
     updatedAt: string
 }
 
+// ADR-0003 section 1, what counts as an acceptable image
+export const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
 // Payload for POST /api/tickets
 export interface CreateTicketInput {
     name: string

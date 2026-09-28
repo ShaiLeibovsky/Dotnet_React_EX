@@ -59,6 +59,19 @@ a fixed frontend contract. Showing the image requires breaking that, so the fiel
 is added to both the DTO and the TypeScript `Ticket` type together. The two are
 edited as one contract from here on.
 
+### 5. Every rejection reaches the customer as words
+
+`FormOptions.MultipartBodyLengthLimit` is capped just above the 5 MB image limit, so
+an upload far over it fails while the request is still being parsed rather than
+after megabytes are spooled. That failure arrives as an `InvalidDataException`, which
+the exception handler turns into the same `Image` validation problem the store
+raises, and the dialog checks `file.size` before sending so the common case never
+leaves the browser. The frontend renders whatever message the server returns rather
+than a fixed string, so the two limits cannot drift apart in what the customer reads.
+
+A ticket whose `imageUrl` points at a file that is not there hides the image on load
+error, because a broken-image box is worse than no image at all.
+
 ## Consequences
 
 - `ITicketService.CreateAsync` takes a `NewTicketPayload` rather than a
