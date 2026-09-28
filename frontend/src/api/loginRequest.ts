@@ -11,5 +11,5 @@ export async function loginRequest(
     })
     if (response.status === 401) throw new Error('Email or password is incorrect.')
     if (!response.ok) throw new Error('Sign in failed. Please try again.')
-    return (await response.json()) as AdminSession
+    return await response.json()
 }
