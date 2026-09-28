@@ -4,9 +4,9 @@ import { TicketLoadError } from '@/components/tickets/TicketLoadError'
 import { TicketsLoadError } from '@/components/tickets/TicketsLoadError'
 import { ticketLoader } from '@/loaders/ticketLoader'
 import { ticketsLoader } from '@/loaders/ticketsLoader'
-import { TicketsPage } from '@/pages/TicketsPage'
-import { TicketDetailPage } from '@/pages/TicketDetailPage'
-import { LoginPage } from '@/pages/LoginPage'
+import { TicketsPage } from '@/pages/ticketsPage/TicketsPage'
+import { TicketDetailPage } from '@/pages/ticketDetailPage/TicketDetailPage'
+import { LoginPage } from '@/pages/loginPage/LoginPage'
 
 export const router = createBrowserRouter([
     {

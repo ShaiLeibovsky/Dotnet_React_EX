@@ -36,7 +36,7 @@ src/
     ui/        shadcn/ui primitives (generated)
   context/     AuthContext.tsx      — admin-login POC (useAuth)
   lib/         utils.ts (cn), format.ts (shortId/date)
-  pages/       TicketsPage, TicketDetailPage, LoginPage
+  pages/       one folder per page — ticketsPage/, ticketDetailPage/, loginPage/
   types/       ticket.ts            — domain types + API DTOs
   index.css    Tailwind v4 + theme tokens
 ```
