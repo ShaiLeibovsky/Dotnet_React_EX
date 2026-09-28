@@ -73,7 +73,6 @@
 }
 
 @theme inline {
-    --shadow-lift: 0 0 12px -1px rgb(0 0 0 / 0.22);
     --radius-sm: calc(var(--radius) - 4px);
     --radius-md: calc(var(--radius) - 2px);
     --radius-lg: var(--radius);

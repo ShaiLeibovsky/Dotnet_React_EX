@@ -116,7 +116,7 @@ export const TicketsPage = () => {
                             filtered.map((ticket) => (
                                 <TableRow
                                     key={ticket.id}
-                                    className="has-[a:focus-visible]:outline-ring relative z-0 cursor-pointer transition-[background-color,box-shadow,translate] hover:z-10 hover:-translate-y-0.5 hover:shadow-lift has-[a:focus-visible]:z-10 has-[a:focus-visible]:-translate-y-0.5 has-[a:focus-visible]:-outline-offset-2 has-[a:focus-visible]:shadow-lift has-[a:focus-visible]:outline-2"
+                                    className="has-[a:focus-visible]:outline-ring relative z-0 cursor-pointer transition-[background-color,box-shadow,translate] hover:z-10 hover:-translate-y-0.5 hover:shadow-md has-[a:focus-visible]:z-10 has-[a:focus-visible]:-translate-y-0.5 has-[a:focus-visible]:-outline-offset-2 has-[a:focus-visible]:shadow-md has-[a:focus-visible]:outline-2"
                                 >
                                     <TableCell className="break-words whitespace-normal">
                                         <Link
