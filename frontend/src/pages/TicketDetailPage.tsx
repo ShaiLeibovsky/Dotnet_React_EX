@@ -89,6 +89,13 @@ export const TicketDetailPage = () => {
                             <p className="text-sm whitespace-pre-wrap">
                                 {ticket.description}
                             </p>
+                            {ticket.imageUrl && (
+                                <img
+                                    src={`/${ticket.imageUrl}`}
+                                    alt={`Attached by ${ticket.name}`}
+                                    className="max-h-96 rounded-md border"
+                                />
+                            )}
                             {ticket.summary && (
                                 <div className="rounded-md border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900">
                                     <div className="mb-1 flex items-center gap-1 font-medium">

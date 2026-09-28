@@ -11,6 +11,7 @@ public record TicketDto(
     string Summary,
     string Status,
     string Resolution,
+    string ImageUrl,
     DateTime CreatedAt,
     DateTime UpdatedAt
 );
@@ -27,6 +28,7 @@ public static class TicketMapping
             t.Summary,
             t.Status,
             t.Resolution,
+            t.ImageUrl,
             t.CreatedAt,
             t.UpdatedAt
         );

@@ -35,6 +35,10 @@ internal sealed class TicketApiFactory : WebApplicationFactory<Program>
             Path.Combine(storeDirectory, "tickets.json")
         );
         builder.UseSetting(
+            "TicketStore:UploadDirectory",
+            Path.Combine(storeDirectory, "uploads")
+        );
+        builder.UseSetting(
             "TicketStore:SeedPath",
             Path.Combine(AppContext.BaseDirectory, "dataset.json")
         );

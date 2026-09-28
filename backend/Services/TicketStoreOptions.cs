@@ -16,4 +16,7 @@ public class TicketStoreOptions
 
     /// <summary>Path to the SQLite database file, used when Provider is Sqlite.</summary>
     public string DatabasePath { get; set; } = "tickets.db";
+
+    /// <summary>Directory holding customer-uploaded ticket images.</summary>
+    public string UploadDirectory { get; set; } = "uploads";
 }

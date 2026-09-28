@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.EntityFrameworkCore;
 using TicketApi.Data;
 using TicketApi.Endpoints;
@@ -52,6 +53,7 @@ if (emailOptions.SmtpConfigured)
 else
     builder.Services.AddSingleton<ICustomerNotifier, LogNotifier>();
 
+builder.Services.AddSingleton<TicketImageStore>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 
 // Allow the Vite dev origin so the frontend can call the API directly.
@@ -98,6 +100,17 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
+
+var uploadDirectory = app.Services.GetRequiredService<TicketImageStore>().Directory;
+Directory.CreateDirectory(uploadDirectory);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadDirectory),
+    RequestPath = $"/{TicketImageStore.UrlPrefix}",
+    ServeUnknownFileTypes = false,
+    OnPrepareResponse = served =>
+        served.Context.Response.Headers.XContentTypeOptions = "nosniff",
+});
 
 app.MapTicketEndpoints();
 

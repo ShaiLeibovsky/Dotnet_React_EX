@@ -10,3 +10,6 @@ tickets.json
 tickets.db
 tickets.db-shm
 tickets.db-wal
+
+# Customer-uploaded ticket images
+uploads/

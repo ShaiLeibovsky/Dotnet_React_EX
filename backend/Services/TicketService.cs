@@ -8,16 +8,19 @@ public sealed class TicketService : ITicketService
 {
     private readonly ITicketStore _store;
     private readonly ICustomerNotifier _notifier;
+    private readonly TicketImageStore _imageStore;
     private readonly ILogger<TicketService> _logger;
 
     public TicketService(
         ITicketStore store,
         ICustomerNotifier notifier,
+        TicketImageStore imageStore,
         ILogger<TicketService> logger
     )
     {
         _store = store;
         _notifier = notifier;
+        _imageStore = imageStore;
         _logger = logger;
     }
 
@@ -34,11 +37,16 @@ public sealed class TicketService : ITicketService
     }
 
     public async Task<TicketDto> CreateAsync(
-        CreateTicketRequest request,
+        NewTicketPayload payload,
         CancellationToken ct = default
     )
     {
+        var request = payload.Request;
         Validate(request);
+
+        var imageUrl = payload.Image is null
+            ? string.Empty
+            : await _imageStore.SaveAsync(payload.Image, ct);
 
         var now = DateTime.UtcNow;
         var ticket = new Ticket
@@ -47,6 +55,7 @@ public sealed class TicketService : ITicketService
             Email = request.Email.Trim(),
             Description = request.Description.Trim(),
             Status = TicketStatuses.New,
+            ImageUrl = imageUrl,
             CreatedAt = now,
             UpdatedAt = now,
         };

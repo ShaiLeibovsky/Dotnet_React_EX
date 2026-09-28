@@ -11,6 +11,7 @@ export interface Ticket {
     summary: string
     status: TicketStatus
     resolution: string
+    imageUrl: string
     createdAt: string
     updatedAt: string
 }
@@ -20,6 +21,7 @@ export interface CreateTicketInput {
     name: string
     email: string
     description: string
+    image?: File
 }
 
 // Payload for PUT /api/tickets/{id}

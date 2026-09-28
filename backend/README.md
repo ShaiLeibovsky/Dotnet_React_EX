@@ -20,6 +20,7 @@ backend/
     ITicketStore / JsonTicketStore     thread-safe JSON-file persistence
     ITicketStore / SqliteTicketStore   EF Core persistence, selected by configuration
     ITicketService / TicketService     validation + orchestration + mapping
+    TicketImageStore                   validates and writes customer-uploaded images
     ICustomerNotifier / LogNotifier    notification channel that only logs (the default)
     ICustomerNotifier / EmailNotifier  notification channel over SMTP, when configured
   Data/                 TicketDbContext, migrations, startup migrate + seed
@@ -74,11 +75,20 @@ show an error and a retry control.
 |--------|------|------|---------|--------|
 | GET | `/api/tickets` | — | 200 `Ticket[]` | — |
 | GET | `/api/tickets/{id}` | — | 200 `Ticket` | 404 |
-| POST | `/api/tickets` | `{ name, email, description }` | 201 + Location | 400 |
+| POST | `/api/tickets` | `{ name, email, description }` as JSON, or the same fields plus an optional `image` file as multipart | 201 + Location | 400 |
 | PUT | `/api/tickets/{id}` | `{ status, resolution }` | 200 `Ticket` | 400, 404 |
 
 Statuses: `New`, `In Progress`, `Resolved`, `Closed`.
 Server sets `id`, timestamps, and defaults (`status=New`, empty summary/resolution) on create.
+
+## Ticket images
+
+An `image` part on create is written to the gitignored `TicketStore:UploadDirectory`
+(default `backend/uploads`) and served from `/uploads`, which is what the ticket's
+`imageUrl` points at. Uploads over 5 MB, and files whose leading bytes are not a
+PNG, JPEG, GIF or WebP signature, are rejected with a 400 naming the `Image` field —
+the declared content type and the file extension are not trusted. See
+[ADR-0003](../docs/adr/0003-customer-ticket-images.md).
 
 ## Notifications
 

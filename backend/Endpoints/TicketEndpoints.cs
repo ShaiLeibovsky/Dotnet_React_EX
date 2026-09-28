@@ -25,12 +25,12 @@ public static class TicketEndpoints
         });
 
         group.MapPost("/", async Task<IResult> (
-            CreateTicketRequest request,
+            HttpRequest http,
             ITicketService service,
             CancellationToken ct
         ) =>
         {
-            var created = await service.CreateAsync(request, ct);
+            var created = await service.CreateAsync(await NewTicketPayload.ReadAsync(http, ct), ct);
             return TypedResults.Created($"/api/tickets/{created.Id}", created);
         });
 

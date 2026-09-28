@@ -15,7 +15,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog'
-import { createTicket } from '@/api/ticketsApi'
+import { ApiError, createTicket } from '@/api/ticketsApi'
 import type { Ticket } from '@/types/ticket'
 
 const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -35,6 +35,7 @@ export const NewTicketDialog = ({
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [description, setDescription] = useState('')
+    const [image, setImage] = useState<File>()
     const [errors, setErrors] = useState<Errors>({})
     const [saving, setSaving] = useState(false)
 
@@ -42,6 +43,7 @@ export const NewTicketDialog = ({
         setName('')
         setEmail('')
         setDescription('')
+        setImage(undefined)
         setErrors({})
     }
 
@@ -64,13 +66,17 @@ export const NewTicketDialog = ({
                 name: name.trim(),
                 email: email.trim(),
                 description: description.trim(),
+                image,
             })
             onCreated(ticket)
             setOpen(false)
             reset()
-        } catch {
+        } catch (failure) {
             toast.error('Could not create the ticket', {
-                description: 'The server is unreachable. Try again.',
+                description:
+                    failure instanceof ApiError
+                        ? failure.message
+                        : 'The server is unreachable. Try again.',
             })
         } finally {
             setSaving(false)
@@ -140,6 +146,17 @@ export const NewTicketDialog = ({
                                     {errors.description}
                                 </p>
                             )}
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="nt-image">
+                                Photo or screenshot (optional)
+                            </Label>
+                            <Input
+                                id="nt-image"
+                                type="file"
+                                accept="image/png,image/jpeg,image/gif,image/webp"
+                                onChange={(e) => setImage(e.target.files?.[0])}
+                            />
                         </div>
                     </div>
 

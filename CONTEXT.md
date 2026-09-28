@@ -9,6 +9,9 @@ work will happen, fixed or not.
 **Resolution** — the admin's written account of how the ticket was settled, and the
 thing the customer is emailed about when it changes.
 
+**Image** — the one photo or screenshot a customer may attach while opening a ticket,
+held on the ticket as an `imageUrl` relative to the API host.
+
 **Summary** — a restatement of the description, generated rather than written by a
 person.
 

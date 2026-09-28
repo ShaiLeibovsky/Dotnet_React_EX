@@ -13,7 +13,7 @@ public interface ITicketService
 
     Task<TicketDto?> GetByIdAsync(string id, CancellationToken ct = default);
 
-    Task<TicketDto> CreateAsync(CreateTicketRequest request, CancellationToken ct = default);
+    Task<TicketDto> CreateAsync(NewTicketPayload payload, CancellationToken ct = default);
 
     Task<TicketDto?> UpdateAsync(
         string id,
