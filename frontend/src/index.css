@@ -117,6 +117,10 @@
     *:focus-visible {
         @apply outline-ring outline-2 outline-offset-2;
     }
+    button:not(:disabled),
+    [role='button']:not(:disabled) {
+        @apply cursor-pointer;
+    }
     body {
         @apply bg-background text-foreground;
     }
