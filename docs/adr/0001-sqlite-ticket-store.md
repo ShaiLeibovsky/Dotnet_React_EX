@@ -29,14 +29,14 @@ storage-only for now, because `TicketDto` is part of the frozen frontend contrac
 
 The whole API test suite is parameterised over both providers and runs twice.
 
-### Why SQLite over a hosted engine
+### 1. Why SQLite over a hosted engine
 
 The exercise must run from a fresh clone with `dotnet run` and no infrastructure.
 SQLite is a file plus a NuGet package: no server, no container, no connection
 secret. Postgres or SQL Server would each add a service a reviewer has to install
 and start before the app works, for a single-table schema and one writer.
 
-### Why EF Core over Dapper
+### 2. Why EF Core over Dapper
 
 Migrations are the reason. The acceptance criteria want a committed schema history,
 which EF Core generates and applies; with Dapper that history would be hand-written
@@ -46,14 +46,14 @@ read-modify-write `UpdateAsync` contract a load-mutate-save rather than a
 hand-rolled diff. The cost is a heavier dependency and less control over emitted
 SQL, which a single-table schema does not need.
 
-### Why the JSON store is retained rather than replaced
+### 3. Why the JSON store is retained rather than replaced
 
 The exercise's stated storage requirement is a server-side JSON file, so a fresh
 clone must still satisfy it. Keeping both implementations also makes the
 persistence boundary falsifiable: the suite passes against both, which it could not
 do if the service layer had leaked storage details.
 
-### What moving to Postgres would cost
+### 4. What moving to Postgres would cost
 
 Swap the provider package for `Npgsql.EntityFrameworkCore.PostgreSQL`, add a third
 `TicketStore:Provider` value with a connection string, and regenerate the migration

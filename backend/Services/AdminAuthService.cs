@@ -50,7 +50,7 @@ public sealed class AdminAuthService
         );
 
         // Hash on the unknown-email path too, so the response time does not say
-        // whether the account exists -- ADR-0002.
+        // whether the account exists -- ADR-0002 section 5, hashing and secrets.
         if (admin is null)
         {
             hasher.VerifyHashedPassword(new AdminUser(), DecoyPasswordHash, request.Password);

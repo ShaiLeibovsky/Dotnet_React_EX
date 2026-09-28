@@ -29,7 +29,8 @@ builder.Services.Configure<TicketStoreOptions>(
 builder.Services.Configure<EmailOptions>(
     builder.Configuration.GetSection(EmailOptions.SectionName)
 );
-// ponytail: ephemeral dev signing key; tokens die on restart -- ADR-0002.
+// ponytail: ephemeral dev signing key; tokens die on restart
+// -- ADR-0002 section 5, hashing and secrets.
 var signingKeyIsEphemeral = string.IsNullOrWhiteSpace(
     builder.Configuration[$"{AuthOptions.SectionName}:SigningKey"]
 );
@@ -47,7 +48,7 @@ var storeOptions =
     ?? new TicketStoreOptions();
 var storeIsSqlite = storeOptions.Provider == TicketStoreProvider.Sqlite;
 
-// ADR-0002
+// ADR-0002 section 2, always SQLite.
 builder.Services.AddDbContext<TicketDbContext>(options =>
     options.UseSqlite($"Data Source={storeOptions.DatabasePath}")
 );

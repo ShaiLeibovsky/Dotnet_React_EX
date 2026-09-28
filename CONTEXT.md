@@ -15,7 +15,7 @@ person.
 **Admin** — a signed-in support staff member, and the only actor allowed to change
 status or resolution. Enforced by the server: `PUT /api/tickets/{id}` requires a valid
 token, while listing, reading and creating stay open to anyone. Every account in the
-users table is an admin, so there is no role — see ADR-0002.
+users table is an admin, so there is no role — see ADR-0002 section 1, no role column.
 
 **Session** — an admin's signed token plus the email it was issued to, held in browser
 local storage and valid for eight hours.
