@@ -108,6 +108,24 @@ loses every id still waiting, and those tickets keep an empty summary forever �
 is no sweep for them. That is the deliberate ceiling: a durable queue would need a
 table, a claim protocol and a retry count, for a field that is already optional.
 
+### 6. Waiting for the summary in the browser
+
+Section 5 left the create response with no summary, so the detail page the customer
+lands on after creating a ticket rendered without one and never changed. React Router
+already owns the fetch through `ticketLoader`, so `useRevalidateUntilSummary` calls
+`useRevalidator` on a 2 second interval rather than adding a second fetch path or a
+data-fetching dependency.
+
+The poll only runs while a summary is still expected: the ticket has none *and* it was
+created less than 60 seconds ago. Both conditions matter. Without the first, every page
+view polls forever; without the second, an old ticket whose summary failed — or every
+ticket on an instance with no API key — polls forever too. 60s covers the whole retry
+budget of section 4 with room to spare, and the cost of being wrong is one missing
+summary until the customer reloads.
+
+The list page does not poll. A summary that appears there does so on the next visit,
+which is the normal loader fetch.
+
 ## Consequences
 
 - `POST /api/tickets` returns at store-and-notify speed. Every ticket is created with
