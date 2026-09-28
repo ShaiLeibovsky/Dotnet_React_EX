@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.IdentityModel.Tokens;
 using TicketApi.Data;
 using TicketApi.Endpoints;
@@ -27,6 +28,9 @@ builder.Services.Configure<TicketStoreOptions>(
 );
 builder.Services.Configure<EmailOptions>(
     builder.Configuration.GetSection(EmailOptions.SectionName)
+);
+builder.Services.Configure<SummaryOptions>(
+    builder.Configuration.GetSection(SummaryOptions.SectionName)
 );
 builder.Services.Configure<AuthOptions>(
     builder.Configuration.GetSection(AuthOptions.SectionName)
@@ -66,6 +70,43 @@ if (emailOptions.SmtpConfigured)
     builder.Services.AddSingleton<ICustomerNotifier, EmailNotifier>();
 else
     builder.Services.AddSingleton<ICustomerNotifier, LogNotifier>();
+
+var summaryOptions =
+    builder.Configuration.GetSection(SummaryOptions.SectionName).Get<SummaryOptions>()
+    ?? new SummaryOptions();
+
+if (string.IsNullOrWhiteSpace(summaryOptions.ApiKey))
+{
+    builder.Services.AddSingleton<ISummaryService, NullSummaryService>();
+}
+else
+{
+    // ADR-0003 section 4, retrying an overloaded provider.
+    builder
+        .Services.AddHttpClient<ISummaryService, GeminiSummaryService>(client =>
+        {
+            client.BaseAddress = new Uri(GeminiSummaryService.BaseAddress);
+            client.Timeout = Timeout.InfiniteTimeSpan;
+            client.DefaultRequestHeaders.Add("x-goog-api-key", summaryOptions.ApiKey);
+        })
+        .AddStandardResilienceHandler()
+        .Configure(resilience =>
+        {
+            resilience.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(
+                summaryOptions.TimeoutSeconds
+            );
+            resilience.AttemptTimeout.Timeout = TimeSpan.FromSeconds(
+                summaryOptions.AttemptTimeoutSeconds
+            );
+            resilience.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(
+                summaryOptions.AttemptTimeoutSeconds * 2
+            );
+        });
+}
+
+// ADR-0003 section 5, summarising after the response.
+builder.Services.AddSingleton<SummaryQueue>();
+builder.Services.AddHostedService<SummaryBackfill>();
 
 builder.Services.AddSingleton<IPasswordHasher<AdminUser>, PasswordHasher<AdminUser>>();
 builder.Services.AddScoped<AdminAuthService>();

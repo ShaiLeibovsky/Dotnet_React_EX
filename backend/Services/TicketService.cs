@@ -8,17 +8,17 @@ public sealed class TicketService : ITicketService
 {
     private readonly ITicketStore _store;
     private readonly ICustomerNotifier _notifier;
-    private readonly ILogger<TicketService> _logger;
+    private readonly SummaryQueue _summaryQueue;
 
     public TicketService(
         ITicketStore store,
         ICustomerNotifier notifier,
-        ILogger<TicketService> logger
+        SummaryQueue summaryQueue
     )
     {
         _store = store;
         _notifier = notifier;
-        _logger = logger;
+        _summaryQueue = summaryQueue;
     }
 
     public async Task<IReadOnlyList<TicketDto>> GetAllAsync(CancellationToken ct = default)
@@ -51,10 +51,9 @@ public sealed class TicketService : ITicketService
             UpdatedAt = now,
         };
 
-        // BONUS: generate ticket.Summary via an AI service on feature/ai-summary.
-
         var created = await _store.CreateAsync(ticket, ct);
         await _notifier.SendTicketCreatedAsync(created, ct);
+        _summaryQueue.Enqueue(created.Id);
         return created.ToDto();
     }
 

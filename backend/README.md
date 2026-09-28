@@ -22,6 +22,8 @@ backend/
     ITicketService / TicketService     validation + orchestration + mapping
     ICustomerNotifier / LogNotifier    notification channel that only logs (the default)
     ICustomerNotifier / EmailNotifier  notification channel over SMTP, when configured
+    ISummaryService / GeminiSummaryService  AI summary (Null impl with no key)
+    SummaryQueue / SummaryBackfill     hosted worker that summarises after the response
   Data/                 TicketDbContext, migrations, startup migrate + seed
   Endpoints/TicketEndpoints.cs         /api/tickets route group
 ```
@@ -91,9 +93,27 @@ in Development, environment variables elsewhere). The chosen one is logged on st
 failure is logged and never fails the request that triggered it. See the root README for the
 reviewer-facing setup.
 
-## Out of scope (future branches)
+## AI summary
 
-- `feature/jwt-auth` — admin login + JWT; protect PUT
-- `feature/ai-summary` — AI-generated `summary` on create
+Tickets are created with no summary and answered immediately. `SummaryBackfill` then
+asks `ISummaryService` for a one-sentence summary of the description and writes it
+back, so it appears on a later read and is shown in the ticket table and detail view
+— ADR-0003 section 5, summarising after the response. With no API key configured,
+`NullSummaryService` is registered and every ticket simply keeps its blank summary — a
+fresh clone runs correctly with no credentials. Generation is best-effort: a provider
+failure — or an answer too long to be a summary — is logged and the ticket keeps the
+blank summary. A transient failure such as the `503` the free tier returns under load
+is retried first — ADR-0003 section 4, retrying an overloaded provider.
 
-Seams are in place (`// BONUS` comments) so each lands without refactoring.
+Supply your own [Gemini API key](https://aistudio.google.com/apikey) through
+user-secrets, so it is never committed:
+
+```bash
+cd backend
+dotnet user-secrets set "Summary:ApiKey" "<your-gemini-api-key>"
+dotnet run
+```
+
+`Summary:Model`, `Summary:TimeoutSeconds`, `Summary:AttemptTimeoutSeconds` and
+`Summary:MaxWords` are in `appsettings.json`. To turn the feature off again, `dotnet user-secrets remove "Summary:ApiKey"`.
+

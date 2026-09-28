@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select'
 import { StatusBadge } from '@/components/tickets/StatusBadge'
 import { updateTicket } from '@/api/ticketsApi'
+import { useRevalidateUntilSummary } from '@/hooks/useRevalidateUntilSummary'
 import { formatDateTime } from '@/lib/format'
 import { useAuth } from '@/context/AuthContext'
 import { STATUSES, type Ticket, type TicketStatus } from '@/types/ticket'
@@ -26,6 +27,8 @@ export const TicketDetailPage = () => {
     const [status, setStatus] = useState<TicketStatus>(ticket.status)
     const [resolution, setResolution] = useState(ticket.resolution)
     const [saving, setSaving] = useState(false)
+
+    useRevalidateUntilSummary(ticket)
 
     if (editedTicketId !== ticket.id) {
         setEditedTicketId(ticket.id)
