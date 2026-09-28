@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { LifeBuoy } from 'lucide-react'
+import { FieldError } from '@/components/form/FieldError'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -60,7 +61,7 @@ export const LoginPage = () => {
                                 autoComplete="current-password"
                             />
                         </div>
-                        {error && <p className="text-destructive text-sm">{error}</p>}
+                        {error && <FieldError id="lg-error">{error}</FieldError>}
                         <Button type="submit" className="w-full" disabled={busy}>
                             {busy ? 'Signing in…' : 'Sign in'}
                         </Button>

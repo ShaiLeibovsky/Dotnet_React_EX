@@ -28,7 +28,7 @@ export const TicketDetailPage = () => {
     const [resolution, setResolution] = useState(ticket.resolution)
     const [saving, setSaving] = useState(false)
 
-    useRevalidateUntilSummary(ticket)
+    const summaryStillExpected = useRevalidateUntilSummary(ticket)
 
     if (editedTicketId !== ticket.id) {
         setEditedTicketId(ticket.id)
@@ -61,7 +61,7 @@ export const TicketDetailPage = () => {
     return (
         <div className="mx-auto max-w-5xl px-4 py-8">
             <div className="mb-2">
-                <h1 className="text-2xl font-normal">
+                <h1 className="text-2xl font-normal break-words">
                     {ticket.description}{' '}
                     <span className="text-muted-foreground font-mono">
                         #{ticket.id.slice(0, 7)}
@@ -81,7 +81,7 @@ export const TicketDetailPage = () => {
                 <div className="space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm font-normal">
+                            <CardTitle className="text-sm font-normal break-words">
                                 <strong>{ticket.name}</strong>{' '}
                                 <span className="text-muted-foreground">
                                     &lt;{ticket.email}&gt; described the issue
@@ -92,13 +92,20 @@ export const TicketDetailPage = () => {
                             <p className="text-sm whitespace-pre-wrap">
                                 {ticket.description}
                             </p>
-                            {ticket.summary && (
+                            {ticket.summary ? (
                                 <div className="rounded-md border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900">
                                     <div className="mb-1 flex items-center gap-1 font-medium">
                                         <Sparkles className="size-3.5" /> AI summary
                                     </div>
                                     {ticket.summary}
                                 </div>
+                            ) : (
+                                summaryStillExpected && (
+                                    <p className="text-muted-foreground flex items-center gap-1 text-sm">
+                                        <Sparkles className="size-3.5" /> Generating AI
+                                        summary…
+                                    </p>
+                                )
                             )}
                         </CardContent>
                     </Card>
@@ -114,7 +121,7 @@ export const TicketDetailPage = () => {
                                 value={status}
                                 onValueChange={(v) => setStatus(v as TicketStatus)}
                             >
-                                <SelectTrigger className="w-full">
+                                <SelectTrigger className="w-full" aria-label="Status">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -136,6 +143,7 @@ export const TicketDetailPage = () => {
                         </h3>
                         {isAdmin ? (
                             <Textarea
+                                aria-label="Resolution"
                                 value={resolution}
                                 onChange={(e) => setResolution(e.target.value)}
                                 placeholder="Add or edit resolution notes…"

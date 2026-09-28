@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useLoaderData, useNavigate } from 'react-router-dom'
+import { Link, useLoaderData, useNavigate } from 'react-router-dom'
 import { CircleDot } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import {
@@ -48,7 +48,7 @@ export const TicketsPage = () => {
 
     return (
         <div className="mx-auto max-w-5xl px-4 py-8">
-            <div className="mb-4 flex items-center gap-3">
+            <div className="mb-4 flex flex-wrap items-center gap-3">
                 <h1 className="text-xl font-semibold">Support Tickets</h1>
                 <div className="flex-1" />
                 <NewTicketDialog
@@ -56,12 +56,15 @@ export const TicketsPage = () => {
                 />
             </div>
 
-            <div className="mb-4 flex gap-2">
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row">
                 <Select
                     value={statusFilter}
                     onValueChange={(v) => setStatusFilter(v as StatusFilter)}
                 >
-                    <SelectTrigger className="w-44">
+                    <SelectTrigger
+                        className="w-full sm:w-44"
+                        aria-label="Filter by status"
+                    >
                         <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -75,6 +78,7 @@ export const TicketsPage = () => {
                 </Select>
                 <Input
                     className="flex-1"
+                    aria-label="Search tickets by name or description"
                     placeholder="Search by name or description…"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -103,20 +107,24 @@ export const TicketsPage = () => {
                                     colSpan={2}
                                     className="text-muted-foreground py-10 text-center"
                                 >
-                                    No tickets match your filters.
+                                    {tickets.length === 0
+                                        ? 'No tickets yet. Open the first one.'
+                                        : 'No tickets match your filters.'}
                                 </TableCell>
                             </TableRow>
                         ) : (
                             filtered.map((ticket) => (
                                 <TableRow
                                     key={ticket.id}
-                                    className="cursor-pointer"
-                                    onClick={() => navigate(`/tickets/${ticket.id}`)}
+                                    className="has-[a:focus-visible]:outline-ring relative z-0 cursor-pointer transition-[background-color,box-shadow,translate] hover:z-10 hover:-translate-y-0.5 hover:shadow-md has-[a:focus-visible]:z-10 has-[a:focus-visible]:-translate-y-0.5 has-[a:focus-visible]:-outline-offset-2 has-[a:focus-visible]:shadow-md has-[a:focus-visible]:outline-2"
                                 >
-                                    <TableCell>
-                                        <div className="font-medium">
+                                    <TableCell className="break-words whitespace-normal">
+                                        <Link
+                                            to={`/tickets/${ticket.id}`}
+                                            className="font-medium hover:underline after:absolute after:inset-0 focus-visible:outline-none"
+                                        >
                                             {ticket.description}
-                                        </div>
+                                        </Link>
                                         <div className="text-muted-foreground text-xs">
                                             <span className="font-mono">
                                                 {shortId(ticket.id)}
@@ -125,12 +133,16 @@ export const TicketsPage = () => {
                                             {ticket.name}
                                         </div>
                                         {ticket.summary && (
-                                            <div className="text-muted-foreground mt-1 truncate text-xs">
-                                                🤖 {ticket.summary}
+                                            <div className="text-muted-foreground mt-1 line-clamp-2 text-xs">
+                                                <span aria-hidden="true">🤖</span>
+                                                <span className="sr-only">
+                                                    AI summary:
+                                                </span>{' '}
+                                                {ticket.summary}
                                             </div>
                                         )}
                                     </TableCell>
-                                    <TableCell className="text-right">
+                                    <TableCell className="align-top text-right">
                                         <StatusBadge status={ticket.status} />
                                     </TableCell>
                                 </TableRow>

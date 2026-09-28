@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
+import { FieldError } from '@/components/form/FieldError'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -91,7 +92,7 @@ export const NewTicketDialog = ({
                     New ticket
                 </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-h-[90dvh] overflow-y-auto">
                 <form onSubmit={submit}>
                     <DialogHeader>
                         <DialogTitle>Open a new ticket</DialogTitle>
@@ -109,9 +110,13 @@ export const NewTicketDialog = ({
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="Jane Smith"
+                                aria-invalid={Boolean(errors.name)}
+                                aria-describedby={
+                                    errors.name ? 'nt-name-error' : undefined
+                                }
                             />
                             {errors.name && (
-                                <p className="text-destructive text-sm">{errors.name}</p>
+                                <FieldError id="nt-name-error">{errors.name}</FieldError>
                             )}
                         </div>
                         <div className="grid gap-2">
@@ -121,9 +126,15 @@ export const NewTicketDialog = ({
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="jane@example.com"
+                                aria-invalid={Boolean(errors.email)}
+                                aria-describedby={
+                                    errors.email ? 'nt-email-error' : undefined
+                                }
                             />
                             {errors.email && (
-                                <p className="text-destructive text-sm">{errors.email}</p>
+                                <FieldError id="nt-email-error">
+                                    {errors.email}
+                                </FieldError>
                             )}
                         </div>
                         <div className="grid gap-2">
@@ -134,11 +145,15 @@ export const NewTicketDialog = ({
                                 onChange={(e) => setDescription(e.target.value)}
                                 placeholder="Describe what went wrong…"
                                 rows={4}
+                                aria-invalid={Boolean(errors.description)}
+                                aria-describedby={
+                                    errors.description ? 'nt-desc-error' : undefined
+                                }
                             />
                             {errors.description && (
-                                <p className="text-destructive text-sm">
+                                <FieldError id="nt-desc-error">
                                     {errors.description}
-                                </p>
+                                </FieldError>
                             )}
                         </div>
                     </div>

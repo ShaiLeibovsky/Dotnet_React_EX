@@ -6,7 +6,10 @@ interface Props {
 }
 
 export const ErrorRetry = ({ message, onRetry }: Props) => (
-    <div className="flex items-center gap-3 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-900">
+    <div
+        role="alert"
+        className="flex flex-wrap items-center gap-3 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-900"
+    >
         <span className="flex-1">{message}</span>
         <Button size="sm" variant="outline" onClick={onRetry}>
             Retry
