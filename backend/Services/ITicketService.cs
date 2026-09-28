@@ -18,6 +18,7 @@ public interface ITicketService
     Task<TicketDto?> UpdateAsync(
         string id,
         UpdateTicketRequest request,
+        string? handlingAdminEmail,
         CancellationToken ct = default
     );
 }

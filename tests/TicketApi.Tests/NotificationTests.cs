@@ -47,6 +47,7 @@ public class NotificationTests
             [$"status-changed:{ticket.Id}:{ticket.Status}->In Progress"],
             api.Notifier.Notifications
         );
+        Assert.Equal([TicketApiFactory.AdminEmail], api.Notifier.ReplyTos);
     }
 
     [Theory]

@@ -26,20 +26,30 @@ public sealed class EmailNotifier : ICustomerNotifier
     public Task SendStatusChangedAsync(
         Ticket ticket,
         string previousStatus,
+        string? handlingAdminEmail,
         CancellationToken ct = default
     ) =>
         SendAsync(
             CustomerNotification.StatusChanged(
                 ticket,
                 previousStatus,
-                _options.TrackingLinkFor(ticket)
+                _options.TrackingLinkFor(ticket),
+                handlingAdminEmail
             ),
             ct
         );
 
-    public Task SendResolutionChangedAsync(Ticket ticket, CancellationToken ct = default) =>
+    public Task SendResolutionChangedAsync(
+        Ticket ticket,
+        string? handlingAdminEmail,
+        CancellationToken ct = default
+    ) =>
         SendAsync(
-            CustomerNotification.ResolutionChanged(ticket, _options.TrackingLinkFor(ticket)),
+            CustomerNotification.ResolutionChanged(
+                ticket,
+                _options.TrackingLinkFor(ticket),
+                handlingAdminEmail
+            ),
             ct
         );
 
@@ -59,6 +69,8 @@ public sealed class EmailNotifier : ICustomerNotifier
                 subject: notification.Subject,
                 body: notification.Body
             );
+            if (notification.ReplyTo is not null)
+                message.ReplyToList.Add(new MailAddress(notification.ReplyTo));
 
             await client.SendMailAsync(message, ct);
         }

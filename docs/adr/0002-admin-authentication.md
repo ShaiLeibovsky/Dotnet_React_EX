@@ -23,7 +23,7 @@ a creation timestamp. `POST /api/auth/login` verifies the password and returns a
 signed JWT plus the authenticated email; `PUT /api/tickets/{id}` carries
 `RequireAuthorization()`. Everything else stays anonymous.
 
-### A users table, but no role column
+### 1. A users table, but no role column
 
 Authentication alone expresses the rule: holding a valid token *is* being an admin,
 because the only accounts that exist are admin accounts. A role column would be a
@@ -31,7 +31,7 @@ second source of truth for a decision with one outcome, and the authorization po
 would have to read it on every request to learn nothing. Adding roles later is an
 additive migration plus a policy, not a redesign.
 
-### The users table is always SQLite, whichever ticket store is configured
+### 2. The users table is always SQLite, whichever ticket store is configured
 
 `TicketStore:Provider` still selects the ticket store (ADR-0001), but `TicketDbContext`
 is now registered unconditionally so the admin account has a home even when tickets
@@ -39,7 +39,7 @@ live in the JSON file. Storing credentials in a JSON file next to the ticket dat
 the alternative, and it would have meant a second hand-rolled persistence path for the
 one piece of data where a unique index and a real query matter most.
 
-### No refresh tokens
+### 3. No refresh tokens
 
 Tokens live eight hours — one working day — and then the admin signs in again. A
 refresh token would add a second credential to store, a revocation story, and a
@@ -47,7 +47,7 @@ rotation endpoint, to save one login per day for a single account. The cost of t
 decision is that a stolen token is valid until it expires; there is no server-side
 revocation.
 
-### Token storage in browser local storage
+### 4. Token storage in browser local storage
 
 The token is kept in `localStorage`, read by the request helper on every call. The
 honest tradeoff: any script that executes on the page can read it, so a
@@ -61,7 +61,7 @@ survives a page refresh with no server-side session. Given a single admin accoun
 a demo deployment, local storage is the smaller amount of machinery; a production
 deployment with real staff accounts should move to `httpOnly` cookies.
 
-### Hashing and secrets
+### 5. Hashing and secrets
 
 `PasswordHasher<AdminUser>` from `Microsoft.Extensions.Identity.Core` — already in the
 ASP.NET Core shared framework — provides the salted PBKDF2 hash, so no third-party
@@ -75,6 +75,26 @@ cd backend
 dotnet user-secrets set "Auth:SigningKey" "$(openssl rand -base64 48)"
 dotnet user-secrets set "Auth:AdminPassword" "<your password>"
 ```
+
+### 6. The handling admin is a Reply-To, not the sender
+
+An edit notification is sent from the configured SMTP mailbox (`Email:SmtpUser`, or
+`Email:SmtpFrom`) and carries the editing admin's email as `Reply-To`, repeated as one
+line of the body for clients that hide the header. A customer reply reaches the admin
+who touched the ticket; the credential stays one service account.
+
+Sending *as* the admin was the alternative and was rejected on two counts. Providers
+generally require the `From` to match the authenticated account, and a `From` on a
+domain the sending mailbox cannot sign fails SPF and DKIM alignment, so the mail is
+rejected or filtered — `Auth:AdminEmail` defaults to `admin@supporthub.local`, which is
+not a deliverable address at all. Per-admin sending would also mean a per-admin SMTP
+credential; keeping those in the `Admins` row would put a recoverable secret in the
+ticket database, next to the data it is least related to, where a leaked file becomes a
+mailbox takeover rather than a disclosure of tickets.
+
+The creation notification has no admin — `POST /api/tickets` is anonymous (ADR-0002
+section 1 grants edit alone) — so `handlingAdminEmail` is nullable and no `Reply-To` is
+set on that path.
 
 ## Consequences
 
@@ -92,6 +112,8 @@ dotnet user-secrets set "Auth:AdminPassword" "<your password>"
 - Wrong password and unknown email return the same 401 problem document, and the
   unknown-email path hashes against a decoy so the two take the same time; neither the
   body nor the latency reveals which accounts exist.
+- A customer reply to an edit notification lands in the handling admin's own mailbox,
+  which is outside the app: nothing threads it back onto the ticket.
 - Emails are normalised to trimmed lower case on both the seed and the login path, so a
   re-cased `Auth:AdminEmail` cannot seed a second account past the unique index, and an
   admin who capitalises their address still signs in.
