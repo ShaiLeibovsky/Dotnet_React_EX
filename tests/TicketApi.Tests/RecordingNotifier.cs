@@ -3,7 +3,7 @@ using TicketApi.Services;
 
 namespace TicketApi.Tests;
 
-public sealed class RecordingEmailService : IEmailService
+public sealed class RecordingNotifier : ICustomerNotifier
 {
     private readonly List<string> notifications = [];
 

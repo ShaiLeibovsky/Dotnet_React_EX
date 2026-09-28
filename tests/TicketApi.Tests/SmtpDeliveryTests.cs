@@ -10,24 +10,24 @@ namespace TicketApi.Tests;
 public class SmtpDeliveryTests
 {
     [Fact]
-    public void WithoutCredentialsTheConsoleServiceStaysTheDefault()
+    public void WithoutCredentialsTheLogNotifierStaysTheDefault()
     {
-        using var api = new TicketApiFactory { KeepConfiguredEmailService = true };
+        using var api = new TicketApiFactory { KeepConfiguredNotifier = true };
 
-        var emails = api.Services.GetRequiredService<IEmailService>();
+        var notifier = api.Services.GetRequiredService<ICustomerNotifier>();
 
-        Assert.IsType<ConsoleEmailService>(emails);
+        Assert.IsType<LogNotifier>(notifier);
     }
 
     [Fact]
-    public void WithCredentialsTheSmtpServiceIsRegistered()
+    public void WithCredentialsTheEmailNotifierIsRegistered()
     {
         using var smtp = new FakeSmtpServer();
         using var api = SmtpConfiguredApi(smtp);
 
-        var emails = api.Services.GetRequiredService<IEmailService>();
+        var notifier = api.Services.GetRequiredService<ICustomerNotifier>();
 
-        Assert.IsType<SmtpEmailService>(emails);
+        Assert.IsType<EmailNotifier>(notifier);
     }
 
     [Fact]
@@ -138,7 +138,7 @@ public class SmtpDeliveryTests
     private static TicketApiFactory SmtpConfiguredApi(int smtpPort) =>
         new()
         {
-            KeepConfiguredEmailService = true,
+            KeepConfiguredNotifier = true,
             ConfigurationOverrides =
             {
                 ["Email:SmtpHost"] = "127.0.0.1",

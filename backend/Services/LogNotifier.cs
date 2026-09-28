@@ -3,15 +3,15 @@ using TicketApi.Entities;
 
 namespace TicketApi.Services;
 
-/// <summary>Mock email service: logs the message to the console (no real send).</summary>
-public sealed class ConsoleEmailService : IEmailService
+/// <summary>Logs each customer notification instead of delivering it. The default channel.</summary>
+public sealed class LogNotifier : ICustomerNotifier
 {
     private readonly EmailOptions _options;
-    private readonly ILogger<ConsoleEmailService> _logger;
+    private readonly ILogger<LogNotifier> _logger;
 
-    public ConsoleEmailService(
+    public LogNotifier(
         IOptions<EmailOptions> options,
-        ILogger<ConsoleEmailService> logger
+        ILogger<LogNotifier> logger
     )
     {
         _options = options.Value;
@@ -48,7 +48,7 @@ public sealed class ConsoleEmailService : IEmailService
 
     private void Log(CustomerNotification notification) =>
         _logger.LogInformation(
-            "[EMAIL] To: {Email} | Subject: {Subject}\n{Body}",
+            "[NOTIFICATION] To: {Email} | Subject: {Subject}\n{Body}",
             notification.Recipient,
             notification.Subject,
             notification.Body

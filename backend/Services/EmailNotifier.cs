@@ -6,12 +6,12 @@ using TicketApi.Entities;
 namespace TicketApi.Services;
 
 /// <summary>Delivers customer notifications over SMTP, e.g. Gmail submission on port 587.</summary>
-public sealed class SmtpEmailService : IEmailService
+public sealed class EmailNotifier : ICustomerNotifier
 {
     private readonly EmailOptions _options;
-    private readonly ILogger<SmtpEmailService> _logger;
+    private readonly ILogger<EmailNotifier> _logger;
 
-    public SmtpEmailService(IOptions<EmailOptions> options, ILogger<SmtpEmailService> logger)
+    public EmailNotifier(IOptions<EmailOptions> options, ILogger<EmailNotifier> logger)
     {
         _options = options.Value;
         _logger = logger;

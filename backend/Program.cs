@@ -48,9 +48,9 @@ var emailOptions =
     ?? new EmailOptions();
 
 if (emailOptions.SmtpConfigured)
-    builder.Services.AddSingleton<IEmailService, SmtpEmailService>();
+    builder.Services.AddSingleton<ICustomerNotifier, EmailNotifier>();
 else
-    builder.Services.AddSingleton<IEmailService, ConsoleEmailService>();
+    builder.Services.AddSingleton<ICustomerNotifier, LogNotifier>();
 
 builder.Services.AddScoped<ITicketService, TicketService>();
 
@@ -68,8 +68,8 @@ if (storeIsSqlite)
     await TicketDatabase.MigrateAndSeedAsync(app.Services);
 
 app.Logger.LogInformation(
-    "Customer notifications are delivered by {EmailService}.",
-    app.Services.GetRequiredService<IEmailService>().GetType().Name
+    "Customer notifications are delivered by {Notifier}.",
+    app.Services.GetRequiredService<ICustomerNotifier>().GetType().Name
 );
 
 // Map ValidationException to a 400 ValidationProblem; everything else to 500.

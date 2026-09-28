@@ -3,10 +3,10 @@ using TicketApi.Entities;
 namespace TicketApi.Services;
 
 /// <summary>
-/// Customer notifications. <see cref="ConsoleEmailService"/> only logs and is the default;
-/// <see cref="SmtpEmailService"/> delivers by email once SMTP credentials are configured.
+/// One customer notification channel. <see cref="LogNotifier"/> logs and is the default;
+/// <see cref="EmailNotifier"/> delivers by email once SMTP credentials are configured.
 /// </summary>
-public interface IEmailService
+public interface ICustomerNotifier
 {
     Task SendTicketCreatedAsync(Ticket ticket, CancellationToken ct = default);
 
