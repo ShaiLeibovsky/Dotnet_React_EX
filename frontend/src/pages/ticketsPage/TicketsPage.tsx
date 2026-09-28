@@ -114,11 +114,14 @@ export const TicketsPage = () => {
                             </TableRow>
                         ) : (
                             filtered.map((ticket) => (
-                                <TableRow key={ticket.id}>
+                                <TableRow
+                                    key={ticket.id}
+                                    className="has-[a:focus-visible]:outline-ring has-[a:focus-visible]:-outline-offset-2 has-[a:focus-visible]:outline-2"
+                                >
                                     <TableCell className="break-words whitespace-normal">
                                         <Link
                                             to={`/tickets/${ticket.id}`}
-                                            className="font-medium hover:underline"
+                                            className="font-medium hover:underline focus-visible:outline-none"
                                         >
                                             {ticket.description}
                                         </Link>
