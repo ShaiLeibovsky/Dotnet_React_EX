@@ -11,7 +11,10 @@ export const Header = () => {
     return (
         <header className="bg-neutral-900 text-white">
             <div className="mx-auto flex h-14 max-w-5xl items-center gap-2 px-4">
-                <Link to="/" className="flex items-center gap-2 rounded-lg font-semibold">
+                <Link
+                    to="/"
+                    className="-ml-2 flex h-8 items-center gap-2 rounded-md px-2 font-semibold"
+                >
                     <LifeBuoy className="size-6" />
                     <span>SupportHub</span>
                     <span className="hidden font-normal text-neutral-400 sm:inline">
