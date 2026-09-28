@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
@@ -29,15 +28,6 @@ builder.Services.Configure<TicketStoreOptions>(
 builder.Services.Configure<EmailOptions>(
     builder.Configuration.GetSection(EmailOptions.SectionName)
 );
-// ponytail: ephemeral dev signing key; tokens die on restart
-// -- ADR-0002 section 5, hashing and secrets.
-var signingKeyIsEphemeral = string.IsNullOrWhiteSpace(
-    builder.Configuration[$"{AuthOptions.SectionName}:SigningKey"]
-);
-if (signingKeyIsEphemeral)
-    builder.Configuration[$"{AuthOptions.SectionName}:SigningKey"] =
-        Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
-
 builder.Services.Configure<AuthOptions>(
     builder.Configuration.GetSection(AuthOptions.SectionName)
 );
@@ -47,6 +37,16 @@ var storeOptions =
     builder.Configuration.GetSection(TicketStoreOptions.SectionName).Get<TicketStoreOptions>()
     ?? new TicketStoreOptions();
 var storeIsSqlite = storeOptions.Provider == TicketStoreProvider.Sqlite;
+
+// ADR-0002 section 7, the generated development signing key.
+var signingKeyIsGenerated = string.IsNullOrWhiteSpace(
+    builder.Configuration[$"{AuthOptions.SectionName}:SigningKey"]
+);
+if (signingKeyIsGenerated)
+    builder.Configuration[$"{AuthOptions.SectionName}:SigningKey"] =
+        DevelopmentSigningKey.LoadOrCreate(
+            Path.ChangeExtension(storeOptions.DatabasePath, ".signing-key")
+        );
 
 // ADR-0002 section 2, always SQLite.
 builder.Services.AddDbContext<TicketDbContext>(options =>
@@ -102,10 +102,10 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-if (signingKeyIsEphemeral)
+if (signingKeyIsGenerated)
     app.Logger.LogWarning(
-        "No Auth:SigningKey configured; signing tokens with an ephemeral key that "
-            + "changes on every restart. Set one through user-secrets."
+        "No Auth:SigningKey configured; signing tokens with a generated key kept beside "
+            + "the database. Set one through user-secrets or the environment to deploy."
     );
 
 await TicketDatabase.MigrateAndSeedAsync(app.Services, seedTickets: storeIsSqlite);

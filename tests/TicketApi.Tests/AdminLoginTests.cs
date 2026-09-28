@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using TicketApi.Dtos;
 
@@ -66,6 +67,48 @@ public class AdminLoginTests
         Assert.Equal(HttpStatusCode.Unauthorized, unknownEmail.StatusCode);
         Assert.Equal(await RejectionAsync(wrongPassword), await RejectionAsync(unknownEmail));
     }
+
+    [Fact]
+    public async Task ATokenOutlivesARestartWhenNoSigningKeyIsConfigured()
+    {
+        var keyDirectory = Directory.CreateTempSubdirectory("ticket-api-signing-key").FullName;
+        var sharedDatabase = Path.Combine(keyDirectory, "tickets.db");
+        var ticket = SeededTickets.Load()[0];
+        try
+        {
+            AuthenticationHeaderValue? issuedBeforeTheRestart;
+            using (var firstRun = GeneratedSigningKeyApi(sharedDatabase))
+            {
+                var client = await firstRun.CreateAdminClientAsync();
+                issuedBeforeTheRestart = client.DefaultRequestHeaders.Authorization;
+            }
+
+            using var secondRun = GeneratedSigningKeyApi(sharedDatabase);
+            var afterTheRestart = secondRun.CreateClient();
+            afterTheRestart.DefaultRequestHeaders.Authorization = issuedBeforeTheRestart;
+
+            var response = await afterTheRestart.PutAsJsonAsync(
+                $"/api/tickets/{ticket.Id}",
+                new { status = "In Progress", resolution = ticket.Resolution }
+            );
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+        finally
+        {
+            Directory.Delete(keyDirectory, recursive: true);
+        }
+    }
+
+    private static TicketApiFactory GeneratedSigningKeyApi(string databasePath) =>
+        new()
+        {
+            ConfigurationOverrides =
+            {
+                ["Auth:SigningKey"] = null,
+                ["TicketStore:DatabasePath"] = databasePath,
+            },
+        };
 
     private static async Task<string> RejectionAsync(HttpResponseMessage response)
     {
