@@ -1,7 +1,8 @@
 using System.Net.Http.Json;
 using Microsoft.Extensions.DependencyInjection;
-using TicketApi.Tickets;
-using TicketApi.Tickets.Stores;
+using TicketApi.Configuration;
+using TicketApi.Modules.Tickets.Entities;
+using TicketApi.Modules.Tickets.Stores;
 
 namespace TicketApi.Tests.Tickets;
 

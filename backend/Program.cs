@@ -5,13 +5,18 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.IdentityModel.Tokens;
-using TicketApi.Data;
-using TicketApi.Auth;
-using TicketApi.Notifications;
+using TicketApi.Configuration;
+using TicketApi.Modules.Auth;
+using TicketApi.Modules.Auth.Entities;
+using TicketApi.Modules.Auth.Util;
+using TicketApi.Modules.Notifications;
+using TicketApi.Modules.Summaries;
+using TicketApi.Modules.Summaries.Background;
+using TicketApi.Modules.Summaries.Util;
+using TicketApi.Modules.Tickets;
+using TicketApi.Modules.Tickets.Stores;
 using TicketApi.Shared;
-using TicketApi.Summaries;
-using TicketApi.Tickets;
-using TicketApi.Tickets.Stores;
+using TicketApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 

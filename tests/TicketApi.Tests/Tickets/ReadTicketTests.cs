@@ -1,5 +1,5 @@
-using TicketApi.Tickets.Stores;
 using System.Net;
+using TicketApi.Configuration;
 
 namespace TicketApi.Tests.Tickets;
 

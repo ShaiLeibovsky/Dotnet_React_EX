@@ -1,6 +1,7 @@
-using TicketApi.Tickets.Stores;
 using System.Reflection;
 using Xunit.Sdk;
+using TicketApi.Configuration;
+using TicketApi.Modules.Tickets.Stores;
 
 namespace TicketApi.Tests.Support;
 

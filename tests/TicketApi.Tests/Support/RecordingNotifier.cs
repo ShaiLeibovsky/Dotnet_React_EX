@@ -1,5 +1,5 @@
-using TicketApi.Notifications;
-using TicketApi.Tickets;
+using TicketApi.Modules.Notifications;
+using TicketApi.Modules.Tickets.Entities;
 
 namespace TicketApi.Tests.Support;
 

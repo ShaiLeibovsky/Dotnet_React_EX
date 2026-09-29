@@ -1,8 +1,8 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using TicketApi.Auth;
-using TicketApi.Tickets.Stores;
+using TicketApi.Configuration;
+using TicketApi.Modules.Auth.Dto;
 
 namespace TicketApi.Tests.Auth;
 

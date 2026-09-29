@@ -4,10 +4,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using TicketApi.Auth;
-using TicketApi.Notifications;
-using TicketApi.Summaries;
-using TicketApi.Tickets.Stores;
+using TicketApi.Configuration;
+using TicketApi.Modules.Auth.Dto;
+using TicketApi.Modules.Notifications;
+using TicketApi.Modules.Summaries;
 
 namespace TicketApi.Tests.Support;
 

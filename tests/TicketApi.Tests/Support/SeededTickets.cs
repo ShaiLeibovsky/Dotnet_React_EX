@@ -1,5 +1,5 @@
 using System.Text.Json;
-using TicketApi.Tickets;
+using TicketApi.Modules.Tickets.Dto;
 
 namespace TicketApi.Tests.Support;
 

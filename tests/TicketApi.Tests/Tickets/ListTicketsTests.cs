@@ -1,6 +1,6 @@
 using System.Net.Http.Json;
-using TicketApi.Tickets;
-using TicketApi.Tickets.Stores;
+using TicketApi.Configuration;
+using TicketApi.Modules.Tickets.Dto;
 
 namespace TicketApi.Tests.Tickets;
 

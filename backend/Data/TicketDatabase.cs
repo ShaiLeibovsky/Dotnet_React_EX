@@ -2,9 +2,10 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using TicketApi.Auth;
-using TicketApi.Tickets;
-using TicketApi.Tickets.Stores;
+using TicketApi.Configuration;
+using TicketApi.Modules.Auth;
+using TicketApi.Modules.Auth.Entities;
+using TicketApi.Modules.Tickets.Entities;
 
 namespace TicketApi.Data;
 

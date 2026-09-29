@@ -1,4 +1,4 @@
-using TicketApi.Summaries;
+using TicketApi.Modules.Summaries;
 
 namespace TicketApi.Tests.Support;
 

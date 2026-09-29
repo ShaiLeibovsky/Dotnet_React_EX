@@ -2,8 +2,8 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Net.Sockets;
 using Microsoft.Extensions.DependencyInjection;
-using TicketApi.Notifications;
-using TicketApi.Tickets;
+using TicketApi.Modules.Notifications;
+using TicketApi.Modules.Tickets.Dto;
 
 namespace TicketApi.Tests.Notifications;
 
