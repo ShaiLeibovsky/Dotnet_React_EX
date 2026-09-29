@@ -6,9 +6,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.IdentityModel.Tokens;
 using TicketApi.Data;
-using TicketApi.Endpoints;
-using TicketApi.Entities;
-using TicketApi.Services;
+using TicketApi.Auth;
+using TicketApi.Notifications;
+using TicketApi.Shared;
+using TicketApi.Summaries;
+using TicketApi.Tickets;
+using TicketApi.Tickets.Stores;
 
 var builder = WebApplication.CreateBuilder(args);
 

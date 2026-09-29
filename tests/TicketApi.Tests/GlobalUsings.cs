@@ -1,2 +1,2 @@
-global using TicketApi.Services;
 global using Xunit;
+global using TicketApi.Tests.Support;

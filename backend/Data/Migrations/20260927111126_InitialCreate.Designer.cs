@@ -20,7 +20,7 @@ namespace TicketApi.Data.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.11");
 
-            modelBuilder.Entity("TicketApi.Entities.Ticket", b =>
+            modelBuilder.Entity("TicketApi.Tickets.Ticket", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("TEXT");
