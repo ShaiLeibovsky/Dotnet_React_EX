@@ -93,7 +93,8 @@ the attempt timeout because the library rejects a sampling window shorter than t
 ### 5. Summarising after the response
 
 `POST /api/tickets` no longer waits for a summary. It stores the ticket, notifies the
-customer, puts the ticket id on `SummaryQueue`, and answers. `SummaryBackfill`, a
+customer -- without waiting for that either, since ADR-0005 section 1 -- puts the
+ticket id on `SummaryQueue`, and answers. `SummaryBackfill`, a
 `BackgroundService`, drains that queue, asks `ISummaryService`, and writes the summary
 back through `ITicketStore.UpdateAsync`. A ticket whose summary fails keeps the empty
 one it was created with, so the failure handling of section 1 is unchanged — only its

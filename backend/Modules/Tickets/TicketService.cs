@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using ValidationException = TicketApi.Shared.ValidationException;
-using TicketApi.Modules.Notifications;
+using TicketApi.Modules.Notifications.Util;
 using TicketApi.Modules.Summaries.Util;
 using TicketApi.Modules.Tickets.Dto;
 using TicketApi.Modules.Tickets.Entities;
@@ -11,17 +11,17 @@ namespace TicketApi.Modules.Tickets;
 public sealed class TicketService : ITicketService
 {
     private readonly ITicketStore _store;
-    private readonly ICustomerNotifier _notifier;
+    private readonly NotificationQueue _notificationQueue;
     private readonly SummaryQueue _summaryQueue;
 
     public TicketService(
         ITicketStore store,
-        ICustomerNotifier notifier,
+        NotificationQueue notificationQueue,
         SummaryQueue summaryQueue
     )
     {
         _store = store;
-        _notifier = notifier;
+        _notificationQueue = notificationQueue;
         _summaryQueue = summaryQueue;
     }
 
@@ -29,6 +29,16 @@ public sealed class TicketService : ITicketService
     {
         var tickets = await _store.GetAllAsync(ct);
         return tickets.Select(t => t.ToDto()).ToList();
+    }
+
+    public async Task<TicketsStatsDto> GetStatsAsync(CancellationToken ct = default)
+    {
+        var tickets = await _store.GetAllAsync(ct);
+        var byStatus = TicketStatuses.All.ToDictionary(
+            status => status,
+            status => tickets.Count(t => t.Status == status)
+        );
+        return new TicketsStatsDto(tickets.Count, byStatus);
     }
 
     public async Task<TicketDto?> GetByIdAsync(string id, CancellationToken ct = default)
@@ -56,7 +66,8 @@ public sealed class TicketService : ITicketService
         };
 
         var created = await _store.CreateAsync(ticket, ct);
-        await _notifier.SendTicketCreatedAsync(created, ct);
+        // ADR-0005 section 1, notifying after the response.
+        _notificationQueue.EnqueueTicketCreated(created);
         _summaryQueue.Enqueue(created.Id);
         return created.ToDto();
     }
@@ -92,14 +103,9 @@ public sealed class TicketService : ITicketService
             return null;
 
         if (updated.Status != previousStatus)
-            await _notifier.SendStatusChangedAsync(
-                updated,
-                previousStatus,
-                handlingAdminEmail,
-                ct
-            );
+            _notificationQueue.EnqueueStatusChanged(updated, previousStatus, handlingAdminEmail);
         if (updated.Resolution != previousResolution)
-            await _notifier.SendResolutionChangedAsync(updated, handlingAdminEmail, ct);
+            _notificationQueue.EnqueueResolutionChanged(updated, handlingAdminEmail);
 
         return updated.ToDto();
     }
