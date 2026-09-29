@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using TicketApi.Entities;
+using TicketApi.Modules.Auth.Entities;
+using TicketApi.Modules.Tickets.Entities;
 
 namespace TicketApi.Data;
 

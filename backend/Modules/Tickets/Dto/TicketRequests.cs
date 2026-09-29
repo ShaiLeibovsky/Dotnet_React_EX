@@ -1,0 +1,16 @@
+using System.ComponentModel.DataAnnotations;
+
+namespace TicketApi.Modules.Tickets.Dto;
+
+/// <summary>Body for POST /api/tickets.</summary>
+public record CreateTicketRequest(
+    [property: Required, StringLength(120)] string Name,
+    [property: Required, EmailAddress] string Email,
+    [property: Required, StringLength(4000, MinimumLength = 1)] string Description
+);
+
+/// <summary>Body for PUT /api/tickets/{id}.</summary>
+public record UpdateTicketRequest(
+    [property: Required] string Status,
+    string? Resolution
+);
