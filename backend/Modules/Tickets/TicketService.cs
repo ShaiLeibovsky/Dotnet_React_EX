@@ -31,16 +31,6 @@ public sealed class TicketService : ITicketService
         return tickets.Select(t => t.ToDto()).ToList();
     }
 
-    public async Task<TicketsStatsDto> GetStatsAsync(CancellationToken ct = default)
-    {
-        var tickets = await _store.GetAllAsync(ct);
-        var byStatus = TicketStatuses.All.ToDictionary(
-            status => status,
-            status => tickets.Count(t => t.Status == status)
-        );
-        return new TicketsStatsDto(tickets.Count, byStatus);
-    }
-
     public async Task<TicketDto?> GetByIdAsync(string id, CancellationToken ct = default)
     {
         var ticket = await _store.GetByIdAsync(id, ct);
