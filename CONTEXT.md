@@ -20,7 +20,7 @@ users table is an admin, so there is no role — see ADR-0002 section 1, no role
 **Session** — an admin's signed token plus the email it was issued to, held in browser
 local storage and valid for eight hours.
 
-**Feature folder** — a backend folder that owns one feature end to end: its entity, DTOs,
-endpoints, service and options all live together, and the namespace matches the folder.
-`Tickets`, `Auth`, `Summaries` and `Notifications` are the four — see ADR-0004 section 1,
-feature folders at the root, not inside Services.
+**Module** — a backend folder under `Modules/` that owns one feature end to end: its
+endpoints, service and interface at the root, with `Dto/`, `Entities/` and the rest one
+level down, and the namespace matching the folder. `Tickets`, `Auth`, `Summaries` and
+`Notifications` are the four — see ADR-0004 section 1, modules under a Modules root.
