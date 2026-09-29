@@ -1,4 +1,3 @@
-using TicketApi.Modules.Summaries;
 using TicketApi.Modules.Summaries.Util;
 using TicketApi.Modules.Tickets.Stores;
 

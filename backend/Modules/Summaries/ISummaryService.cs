@@ -1,4 +1,3 @@
-using TicketApi.Modules.Tickets.Entities;
 
 namespace TicketApi.Modules.Summaries;
 

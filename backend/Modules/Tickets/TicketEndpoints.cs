@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using TicketApi.Modules.Tickets.Dto;
-using TicketApi.Modules.Tickets.Entities;
 
 namespace TicketApi.Modules.Tickets;
 
