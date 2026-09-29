@@ -10,6 +10,8 @@ using TicketApi.Modules.Auth;
 using TicketApi.Modules.Auth.Entities;
 using TicketApi.Modules.Auth.Util;
 using TicketApi.Modules.Notifications;
+using TicketApi.Modules.Notifications.Background;
+using TicketApi.Modules.Notifications.Util;
 using TicketApi.Modules.Summaries;
 using TicketApi.Modules.Summaries.Background;
 using TicketApi.Modules.Summaries.Util;
@@ -111,6 +113,10 @@ else
             );
         });
 }
+
+// ADR-0005 section 1, notifying after the response.
+builder.Services.AddSingleton<NotificationQueue>();
+builder.Services.AddHostedService<NotificationDelivery>();
 
 // ADR-0003 section 5, summarising after the response.
 builder.Services.AddSingleton<SummaryQueue>();

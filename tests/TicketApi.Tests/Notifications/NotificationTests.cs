@@ -27,6 +27,7 @@ public class NotificationTests
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var created = await response.Content.ReadFromJsonAsync<TicketDto>();
 
+        await api.Notifier.SentAsync(1);
         Assert.Equal([$"ticket-created:{created!.Id}"], api.Notifier.Notifications);
     }
 
@@ -44,6 +45,7 @@ public class NotificationTests
         );
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await api.Notifier.SentAsync(1);
         Assert.Equal(
             [$"status-changed:{ticket.Id}:{ticket.Status}->In Progress"],
             api.Notifier.Notifications
@@ -65,7 +67,34 @@ public class NotificationTests
         );
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await api.Notifier.SentAsync(1);
         Assert.Equal([$"resolution-changed:{ticket.Id}"], api.Notifier.Notifications);
+    }
+
+    [Theory]
+    [EveryTicketStore]
+    public async Task OneSaveChangingBothNotifiesInTheOrderTheChangesWereMade(
+        TicketStoreProvider store
+    )
+    {
+        using var api = new TicketApiFactory(store);
+        var client = await api.CreateAdminClientAsync();
+        var ticket = SeededTickets.Load()[0];
+
+        var response = await client.PutAsJsonAsync(
+            $"/api/tickets/{ticket.Id}",
+            new { status = "In Progress", resolution = "Cleaned the vents." }
+        );
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await api.Notifier.SentAsync(2);
+        Assert.Equal(
+            [
+                $"status-changed:{ticket.Id}:{ticket.Status}->In Progress",
+                $"resolution-changed:{ticket.Id}",
+            ],
+            api.Notifier.Notifications
+        );
     }
 
     [Theory]
